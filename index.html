@@ -64,6 +64,17 @@
     <button class="btn-enter" onclick="enterGame()">ВОЙТИ</button>
   </div>
 
+    <!-- 2. Экран приветствия -->
+  <div id="hello-screen" class="screen" style="display:none; width:100vw; height100vh; background:url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello.png') no-repeat center/cover; flex-direction:column; justify-content:center; align-items:center;">
+    <div id="welcome-message" style="color:#fff; font-size:24px; font-weight:bold; margin-bottom:20px;">Привет!</div>
+    <button class="btn-enter" onclick="goToRoom()">НАЧАТЬ ИГРУ</button>
+  </div>
+
+  <!-- 3. Игровая комната -->
+  <div id="room-screen" class="screen" style="display:none; width:100vw; height:100vh; background:url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png') no-repeat center/cover; flex-direction:column; justify-content:center; align-items:center;">
+    <div style="color:#fff; font-size:24px; font-weight:bold;">Игровая комната</div>
+  </div>
+  
   <script>
     // ==========================================
     // ВСТАВЛЯЙ СВОИ ДАННЫЕ ИЗ SUPABASE СЮДА:
@@ -96,6 +107,23 @@
       localStorage.setItem('monopoly_user_name', name);
       alert('Добро пожаловать, ' + name + '!');
     }
+    // Обновляем функцию enterGame и добавляем переход в комнату
+    const oldEnterGame = enterGame;
+    enterGame = function() {
+      const name = document.getElementById('username-input').value.trim();
+      if (!name) { alert('Пожалуйста, введите имя!'); return; }
+      localStorage.setItem('monopoly_user_name', name);
+      document.getElementById('welcome-message').innerText = 'Привет, ' + name + '!';
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('hello-screen').style.display = 'flex';
+    };
+
+    function goToRoom() {
+      document.getElementById('hello-screen').style.display = 'none';
+      document.getElementById('room-screen').style.display = 'flex';
+    }
+      
+
   </script>
 </body>
   </html>
