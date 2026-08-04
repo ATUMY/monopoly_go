@@ -39,35 +39,18 @@
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
     }
 
-    /* Увеличенная по ширине карточка приветствия */
+    /* Карточка с новой картинкой icon_hello1.png */
     .hello-card {
       width: 95vw;
-      max-width: 440px; /* Ширина карточки */
+      max-width: 440px;
       height: 360px;
-      background: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello.png') no-repeat center center;
+      background: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello1.png') no-repeat center center;
       background-size: contain;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-end; /* Выравниваем содержимое по нижнему краю */
       align-items: center;
-      padding: 70px 20px 25px 20px; /* 70px сверху — опускает всё содержимое ниже */
-    }
-
-    /* Текст приветствия */
-    .welcome-text {
-      color: #000000;
-      font-size: 22px;
-      font-weight: 800;
-      text-align: center;
-      line-height: 1.3;
-      text-shadow: 0px 0px 4px rgba(255, 255, 255, 0.8);
-      margin-top: 20px; /* Дополнительно опускает текст вниз */
-      margin-bottom: auto;
-    }
-
-    .welcome-text span {
-      color: #111111;
-      font-size: 24px;
+      padding: 0 20px 25px 20px; /* Отступ 25px снизу удерживает кнопку в нужном положении */
     }
 
     .input-field {
@@ -121,13 +104,9 @@
     <button class="btn-red" id="btn-enter-id">ВОЙТИ</button>
   </div>
 
-  <!-- 2. Игровая комната -->
+  <!-- 2. Игровая комната с карточкой без текста -->
   <div id="room-screen" class="screen">
     <div id="hello-modal" class="hello-card">
-      <div class="welcome-text">
-        Добро пожаловать,<br>
-        <span id="user-display-name">Игрок</span>!
-      </div>
       <button class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
     </div>
   </div>
@@ -170,11 +149,6 @@
       }
       
       localStorage.setItem('monopoly_user_name', name);
-
-      const displayName = document.getElementById('user-display-name');
-      if (displayName) {
-        displayName.textContent = name;
-      }
 
       document.getElementById('auth-screen').classList.remove('active');
       document.getElementById('room-screen').classList.add('active');
