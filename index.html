@@ -180,14 +180,17 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      margin-top: 10px;
+      margin-top: auto;
+      margin-bottom: auto;
     }
 
     .bank-item {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 15px;
+      flex: 1;
     }
 
     .bank-action-icon {
@@ -226,8 +229,8 @@
     .btn-bank-repay:active { transform: scale(0.95); }
 
     .btn-bank-back {
-      background-color: #f1c40f;
-      color: #222222;
+      background-color: #e74c3c;
+      color: #ffffff;
       border: none;
       width: 80%;
       padding: 12px;
@@ -236,9 +239,12 @@
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      transition: transform 0.1s;
+      transition: background 0.2s, transform 0.1s;
     }
-    .btn-bank-back:active { transform: scale(0.95); }
+    .btn-bank-back:active {
+      background-color: #c0392b;
+      transform: scale(0.95);
+    }
 
     /* Универсальные динамические карточки (Credit Plus / Minus) */
     .dynamic-card {
@@ -526,6 +532,16 @@
       }
     }
 
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const user = tg.initDataUnsafe.user;
@@ -559,6 +575,7 @@
         playerBalance += 1000;
         updateBalanceUI();
         creditPlusModal.classList.add('active');
+        triggerConfetti();
       });
 
       // Кнопка ПОГАСИТЬ (погасить кредит -1000)
@@ -567,6 +584,7 @@
         playerBalance -= 1000;
         updateBalanceUI();
         creditMinusModal.classList.add('active');
+        triggerConfetti();
       });
 
       // Кнопка ПОНЯТНО! для credit_plus
@@ -619,13 +637,7 @@
       document.getElementById('auth-screen').classList.remove('active');
       document.getElementById('room-screen').classList.add('active');
 
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      }
+      triggerConfetti();
     }
 
     function startGame() {
