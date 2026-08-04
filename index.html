@@ -29,6 +29,7 @@
 
     .active { display: flex !important; }
 
+    /* 1. Экран авторизации */
     #auth-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_start.png');
       z-index: 50;
@@ -42,6 +43,7 @@
       justify-content: center;
     }
 
+    /* 2. Экран игровой комнаты */
     #room-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
       position: relative;
@@ -49,6 +51,7 @@
 
     .top-bar, .bottom-bar { display: none; }
 
+    /* Верхняя панель */
     .top-bar {
       position: absolute;
       top: 15px;
@@ -100,6 +103,7 @@
     .money-icon { width: 38px; height: 38px; object-fit: contain; }
     .balance-text { font-size: 16px; font-weight: 800; color: #27ae60; }
 
+    /* Карточка приветствия */
     .hello-card {
       width: 95vw;
       max-width: 440px;
@@ -114,35 +118,32 @@
       z-index: 20;
     }
 
+    /* Новая интерактивная карта */
     .game-board-container {
       display: none;
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      width: 96vw;
-      max-width: 500px;
-      height: 96vw;
-      max-height: 500px;
+      width: 82vw;
+      height: 82vw;
+      max-width: 420px;
+      max-height: 420px;
+      min-width: 260px;
+      min-height: 260px;
       aspect-ratio: 1 / 1;
       z-index: 1;
+      transform: translate(-50%, -50%) rotate(0deg);
+      transition: transform 0.15s ease-out;
+      touch-action: none;
+      cursor: grab;
     }
+
+    .game-board-container:active { cursor: grabbing; }
 
     .game-board-container.active { display: block; }
-    .game-board-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .game-board-img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
 
-    .player-token {
-      position: absolute;
-      width: 7.5%;
-      height: 7.5%;
-      object-fit: contain;
-      z-index: 5;
-      transform: translate(-50%, -50%);
-      transition: left 0.3s ease-in-out, top 0.3s ease-in-out;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
-      pointer-events: none;
-    }
-
+    /* Модальное окно Банка */
     .bank-modal {
       display: none;
       position: absolute;
@@ -204,6 +205,7 @@
     .btn-bank-repay { background-color: #e74c3c; color: #ffffff; padding: 10px 18px; font-size: 14px; }
     .btn-bank-back { background-color: #e74c3c; color: #ffffff; width: 80%; padding: 12px; font-size: 16px; border-radius: 12px; }
 
+    /* Динамические карточки */
     .dynamic-card {
       display: none;
       position: absolute;
@@ -274,6 +276,7 @@
 
     .btn-inside-card { width: 85%; max-width: 260px; padding: 12px; font-size: 17px; }
 
+    /* Нижняя панель */
     .bottom-bar {
       position: absolute;
       bottom: 20px;
@@ -310,6 +313,7 @@
     .bar-btn-icon { width: 32px; height: 32px; object-fit: contain; }
     .bar-btn-text { font-size: 11px; font-weight: 800; color: #222222; }
 
+    /* Увеличен размер кубика */
     .dice-btn {
       position: relative;
       background: none;
@@ -319,11 +323,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: -15px;
+      margin-top: -30px;
       touch-action: manipulation;
     }
 
-    .dice-icon { width: 60px; height: 60px; object-fit: contain; }
+    .dice-icon { 
+      width: 82px; 
+      height: 82px; 
+      object-fit: contain; 
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
     .dice-icon.rolling { animation: rollAnimation 2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
 
     @keyframes rollAnimation {
@@ -368,8 +378,7 @@
     </div>
 
     <div id="board-container" class="game-board-container">
-      <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/map.png" alt="Game Board" class="game-board-img">
-      <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_utka.png" alt="Utka Token" id="player-token" class="player-token">
+      <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/maps.png" alt="Game Board" class="game-board-img">
     </div>
 
     <div id="bank-modal" class="bank-modal">
@@ -435,58 +444,6 @@
 
     let playerBalance = 1500;
 
-    const boardPositions = [
-      // 1. Снизу (Старт -> Тюрьма)
-      { x: 93.25, y: 93.25 },
-      { x: 82.44, y: 93.25 },
-      { x: 74.33, y: 93.25 },
-      { x: 66.22, y: 93.25 },
-      { x: 58.11, y: 93.25 },
-      { x: 50.00, y: 93.25 },
-      { x: 41.89, y: 93.25 },
-      { x: 33.78, y: 93.25 },
-      { x: 25.67, y: 93.25 },
-      { x: 17.56, y: 93.25 },
-      { x: 6.75,  y: 93.25 },
-
-      // 2. Слева (Тюрьма -> Парковка)
-      { x: 6.75, y: 82.44 },
-      { x: 6.75, y: 74.33 },
-      { x: 6.75, y: 66.22 },
-      { x: 6.75, y: 58.11 },
-      { x: 6.75, y: 50.00 },
-      { x: 6.75, y: 41.89 },
-      { x: 6.75, y: 33.78 },
-      { x: 6.75, y: 25.67 },
-      { x: 6.75, y: 17.56 },
-      { x: 6.75, y: 6.75 },
-
-      // 3. Сверху (Парковка -> В Тюрьму)
-      { x: 17.56, y: 6.75 },
-      { x: 25.67, y: 6.75 },
-      { x: 33.78, y: 6.75 },
-      { x: 41.89, y: 6.75 },
-      { x: 50.00, y: 6.75 },
-      { x: 58.11, y: 6.75 },
-      { x: 66.22, y: 6.75 },
-      { x: 74.33, y: 6.75 },
-      { x: 82.44, y: 6.75 },
-      { x: 93.25, y: 6.75 },
-
-      // 4. Справа (В Тюрьму -> Старт)
-      { x: 93.25, y: 17.56 },
-      { x: 93.25, y: 25.67 },
-      { x: 93.25, y: 33.78 },
-      { x: 93.25, y: 41.89 },
-      { x: 93.25, y: 50.00 },
-      { x: 93.25, y: 58.11 },
-      { x: 93.25, y: 66.22 },
-      { x: 93.25, y: 74.33 },
-      { x: 93.25, y: 82.44 }
-    ];
-
-    let currentTileIndex = 0;
-
     function updateBalanceUI() {
       const balanceEl = document.getElementById('balance-display');
       if (balanceEl) balanceEl.textContent = playerBalance + ' €';
@@ -496,21 +453,6 @@
       if (typeof confetti === 'function') {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
-    }
-
-    function setTokenPosition(index) {
-      const token = document.getElementById('player-token');
-      if (!token) return;
-      const pos = boardPositions[index];
-      token.style.left = pos.x + '%';
-      token.style.top = pos.y + '%';
-    }
-
-    function moveTokenSteps(steps) {
-      if (steps <= 0) return;
-      currentTileIndex = (currentTileIndex + 1) % boardPositions.length;
-      setTokenPosition(currentTileIndex);
-      setTimeout(() => moveTokenSteps(steps - 1), 350);
     }
 
     function enterGame() {
@@ -537,8 +479,51 @@
 
       const boardContainer = document.getElementById('board-container');
       boardContainer.classList.add('active');
-      
-      setTokenPosition(0);
+    }
+
+    /* Логика вращения карты за пальцем/курсором на ±15 градусов */
+    function initMapRotation() {
+      const container = document.getElementById('board-container');
+      let isDragging = false;
+      let startX = 0;
+      let currentAngle = 0;
+
+      const onStart = (clientX) => {
+        isDragging = true;
+        startX = clientX;
+        container.style.transition = 'none';
+      };
+
+      const onMove = (clientX) => {
+        if (!isDragging) return;
+        const deltaX = clientX - startX;
+        // Ограничиваем угол поворота диапазоном от -15 до +15 градусов
+        currentAngle = Math.max(-15, Math.min(15, deltaX * 0.1));
+        container.style.transform = `translate(-50%, -50%) rotate(${currentAngle}deg)`;
+      };
+
+      const onEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        container.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        container.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+      };
+
+      // Мышь
+      container.addEventListener('mousedown', (e) => onStart(e.clientX));
+      window.addEventListener('mousemove', (e) => onMove(e.clientX));
+      window.addEventListener('mouseup', onEnd);
+
+      // Сенсор
+      container.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) onStart(e.touches[0].clientX);
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) onMove(e.touches[0].clientX);
+      }, { passive: true });
+
+      window.addEventListener('touchend', onEnd);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -613,14 +598,14 @@
 
           setTimeout(() => {
             diceImg.classList.remove('rolling');
-            const diceRoll = Math.floor(Math.random() * 11) + 2;
-            moveTokenSteps(diceRoll);
             isRolling = false;
           }, 2000);
         });
       }
+
+      initMapRotation();
     });
   </script>
 </body>
-  </html>
-  
+              </html>
+              
