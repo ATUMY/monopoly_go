@@ -175,6 +175,18 @@
       object-fit: fill;
     }
 
+    /* Игровая фишка (Уточка) */
+    .player-token {
+      position: absolute;
+      width: 8.5%;
+      height: 8.5%;
+      object-fit: contain;
+      z-index: 5;
+      transform: translate(-50%, -50%);
+      transition: left 0.35s ease-in-out, top 0.35s ease-in-out;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+    }
+
     /* Модальное окно Банка */
     .bank-modal {
       display: none;
@@ -487,6 +499,8 @@
     <!-- Игровая карта в центре -->
     <div id="board-container" class="game-board-container">
       <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/carta.png" alt="Game Board" class="game-board-img">
+      <!-- Игровая фишка -->
+      <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_utka.png" alt="Utka Token" id="player-token" class="player-token">
     </div>
 
     <!-- Модальное окно BANK -->
@@ -556,6 +570,53 @@
 
     let playerBalance = 1500;
 
+    /* Координаты 40 клеток стандартного поля Монополии (в % от размера карты) */
+    /* 0 - СТАРТ (красная стрелка, правый нижний угол) */
+    const boardPositions = [
+      { x: 91.5, y: 91.5 }, // 0: СТАРТ
+      { x: 81.5, y: 91.5 }, // 1
+      { x: 73.0, y: 91.5 }, // 2
+      { x: 64.5, y: 91.5 }, // 3
+      { x: 56.0, y: 91.5 }, // 4
+      { x: 47.5, y: 91.5 }, // 5
+      { x: 39.0, y: 91.5 }, // 6
+      { x: 30.5, y: 91.5 }, // 7
+      { x: 22.0, y: 91.5 }, // 8
+      { x: 13.5, y: 91.5 }, // 9
+      { x: 8.5,  y: 91.5 }, // 10: Тюрьма (левый нижний угол)
+      { x: 8.5,  y: 81.5 }, // 11
+      { x: 8.5,  y: 73.0 }, // 12
+      { x: 8.5,  y: 64.5 }, // 13
+      { x: 8.5,  y: 56.0 }, // 14
+      { x: 8.5,  y: 47.5 }, // 15
+      { x: 8.5,  y: 39.0 }, // 16
+      { x: 8.5,  y: 30.5 }, // 17
+      { x: 8.5,  y: 22.0 }, // 18
+      { x: 8.5,  y: 13.5 }, // 19
+      { x: 8.5,  y: 8.5  }, // 20: Бесплатная парковка (левый верхний угол)
+      { x: 13.5, y: 8.5  }, // 21
+      { x: 22.0, y: 8.5  }, // 22
+      { x: 30.5, y: 8.5  }, // 23
+      { x: 39.0, y: 8.5  }, // 24
+      { x: 47.5, y: 8.5  }, // 25
+      { x: 56.0, y: 8.5  }, // 26
+      { x: 64.5, y: 8.5  }, // 27
+      { x: 73.0, y: 8.5  }, // 28
+      { x: 81.5, y: 8.5  }, // 29
+      { x: 91.5, y: 8.5  }, // 30: Отправляйся в тюрьму (правый верхний угол)
+      { x: 91.5, y: 13.5 }, // 31
+      { x: 91.5, y: 22.0 }, // 32
+      { x: 91.5, y: 30.5 }, // 33
+      { x: 91.5, y: 39.0 }, // 34
+      { x: 91.5, y: 47.5 }, // 35
+      { x: 91.5, y: 56.0 }, // 36
+      { x: 91.5, y: 64.5 }, // 37
+      { x: 91.5, y: 73.0 }, // 38
+      { x: 91.5, y: 81.5 }  // 39
+    ];
+
+    let currentTileIndex = 0; // Текущая позиция игрока (0 = Старт)
+
     function updateBalanceUI() {
       const balanceEl = document.getElementById('balance-display');
       if (balanceEl) {
@@ -573,6 +634,27 @@
       }
     }
 
+    /* Функция установки фишки на позицию */
+    function setTokenPosition(index) {
+      const token = document.getElementById('player-token');
+      if (!token) return;
+      const pos = boardPositions[index];
+      token.style.left = pos.x + '%';
+      token.style.top = pos.y + '%';
+    }
+
+    /* Пошаговое перемещение фишки */
+    function moveTokenSteps(steps) {
+      if (steps <= 0) return;
+      
+      currentTileIndex = (currentTileIndex + 1) % boardPositions.length;
+      setTokenPosition(currentTileIndex);
+
+      setTimeout(() => {
+        moveTokenSteps(steps - 1);
+      }, 360); // Скорость перемещения между клетками
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const user = tg.initDataUnsafe.user;
@@ -581,6 +663,9 @@
           input.value = user.first_name;
         }
       }
+
+      // Инициализация стартовой позиции фишки
+      setTokenPosition(0);
 
       document.getElementById('btn-enter-id').addEventListener('click', enterGame);
       document.getElementById('btn-start-id').addEventListener('click', startGame);
@@ -625,54 +710,10 @@
         console.log('Клик по ACTIVE');
       });
 
+      /* Логика нажатия на Кубик */
       const diceBtn = document.getElementById('btn-dice-id');
       const diceImg = document.getElementById('dice-img-id');
       let isRolling = false;
 
       if (diceBtn && diceImg) {
-        diceBtn.addEventListener('click', () => {
-          if (isRolling) return; 
-          
-          isRolling = true;
-          diceImg.classList.add('rolling');
-
-          setTimeout(() => {
-            diceImg.classList.remove('rolling');
-            isRolling = false;
-          }, 2000);
-        });
-      }
-    });
-
-    function enterGame() {
-      const input = document.getElementById('username-input');
-      const name = input ? input.value.trim() : '';
       
-      if (!name) {
-        alert('Пожалуйста, введите имя!');
-        return;
-      }
-      
-      localStorage.setItem('monopoly_user_name', name);
-      document.getElementById('header-user-name').textContent = name;
-
-      document.getElementById('auth-screen').classList.remove('active');
-      document.getElementById('room-screen').classList.add('active');
-
-      triggerConfetti();
-    }
-
-    function startGame() {
-      const modal = document.getElementById('hello-modal');
-      if (modal) {
-        modal.style.display = 'none';
-      }
-
-      document.getElementById('top-bar-el').classList.add('active-bar');
-      document.getElementById('bottom-bar-el').classList.add('active-bar');
-
-      document.getElementById('board-container').classList.add('active');
-    }
-  </script>
-</body>
-</html>
