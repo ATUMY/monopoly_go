@@ -38,6 +38,12 @@
     #room-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
       position: relative;
+      perspective: 1000px; /* Для 3D-объема */
+    }
+
+    /* Скрытие панелей по умолчанию */
+    .top-bar, .bottom-bar {
+      display: none;
     }
 
     /* Верхняя панель (Header Bar) */
@@ -51,12 +57,15 @@
       height: 54px;
       background-color: #f1e9d6;
       border-radius: 27px;
-      display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 16px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       z-index: 10;
+    }
+
+    .top-bar.active-bar {
+      display: flex;
     }
 
     /* Левая часть: аватар и инфо */
@@ -140,6 +149,55 @@
       justify-content: flex-end;
       align-items: center;
       padding: 0 20px 25px 20px;
+      z-index: 20;
+    }
+
+    /* Объемное игровое поле (Карта) */
+    .game-board-container {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotateX(25deg) rotateZ(-2deg);
+      width: 85vw;
+      max-width: 380px;
+      height: 85vw;
+      max-height: 380px;
+      border-radius: 20px;
+      box-shadow: 
+        0 20px 30px rgba(0, 0, 0, 0.5),
+        0 10px 0px #b8a280,
+        0 15px 0px #8c785c;
+      animation: barGlow 2s infinite ease-in-out;
+      transition: all 0.3s ease;
+      z-index: 1;
+    }
+
+    .game-board-container.active {
+      display: block;
+    }
+
+    .game-board-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 18px;
+    }
+
+    /* Сияние в цвет бара (#f1e9d6) */
+    @keyframes barGlow {
+      0%, 100% {
+        box-shadow: 
+          0 20px 30px rgba(0, 0, 0, 0.5),
+          0 10px 0px #b8a280,
+          0 0 15px 4px rgba(241, 233, 214, 0.4);
+      }
+      50% {
+        box-shadow: 
+          0 20px 30px rgba(0, 0, 0, 0.5),
+          0 10px 0px #b8a280,
+          0 0 35px 12px rgba(241, 233, 214, 0.95);
+      }
     }
 
     /* Модальное окно Банка */
@@ -246,7 +304,7 @@
       transform: scale(0.95);
     }
 
-    /* Универсальные динамические карточки (Credit Plus / Minus) */
+    /* Динамические карточки */
     .dynamic-card {
       display: none;
       position: absolute;
@@ -338,7 +396,6 @@
       height: 64px;
       background-color: #f1e9d6;
       border-radius: 32px;
-      display: flex;
       align-items: center;
       justify-content: space-around;
       padding: 0 10px;
@@ -346,7 +403,10 @@
       z-index: 10;
     }
 
-    /* Кнопки нижней панели */
+    .bottom-bar.active-bar {
+      display: flex;
+    }
+
     .bar-btn {
       background: none;
       border: none;
@@ -426,8 +486,7 @@
   <div id="room-screen" class="screen">
     
     <!-- Верхняя панель -->
-    <div class="top-bar">
-      <!-- Левый блок: Игрок -->
+    <div class="top-bar" id="top-bar-el">
       <div class="bar-player">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_player.png" alt="Player" class="player-icon">
         <div class="player-info">
@@ -439,46 +498,47 @@
         </div>
       </div>
 
-      <!-- Правый блок: Баланс -->
       <div class="bar-balance">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_money.png" alt="Money" class="money-icon">
         <span class="balance-text" id="balance-display">1500 €</span>
       </div>
     </div>
 
-    <!-- Карточка в центре -->
+    <!-- Карточка приветствия -->
     <div id="hello-modal" class="hello-card">
       <button class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
+    </div>
+
+    <!-- Объемная игровая карта в центре -->
+    <div id="board-container" class="game-board-container">
+      <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/carta.png" alt="Game Board" class="game-board-img">
     </div>
 
     <!-- Модальное окно BANK -->
     <div id="bank-modal" class="bank-modal">
       <div class="bank-content">
         <div class="bank-columns">
-          <!-- Центр слева: Кредит плюс -->
           <div class="bank-item">
             <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/bank_plus.png" alt="Bank Plus" class="bank-action-icon">
             <button class="btn-bank-get" id="btn-get-credit">ПОЛУЧИТЬ</button>
           </div>
-          <!-- Центр справа: Кредит минус -->
           <div class="bank-item">
             <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/bank_minus.png" alt="Bank Minus" class="bank-action-icon">
             <button class="btn-bank-repay" id="btn-repay-credit">ПОГАСИТЬ</button>
           </div>
         </div>
-        <!-- Внизу по центру: Назад -->
         <button class="btn-bank-back" id="btn-bank-back">НАЗАД</button>
       </div>
     </div>
 
-    <!-- Карточка результата: ПОЛУЧИТЬ КРЕДИТ (credit_plus.png) -->
+    <!-- Карточка КРЕДИТ ПЛЮС -->
     <div id="credit-plus-modal" class="dynamic-card">
       <div class="dynamic-card-box">
         <button class="btn-red btn-inside-card" id="btn-credit-plus-ok">ПОНЯТНО!</button>
       </div>
     </div>
 
-    <!-- Карточка результата: ПОГАСИТЬ КРЕДИТ (credit_minus.png) -->
+    <!-- Карточка КРЕДИТ МИНУС -->
     <div id="credit-minus-modal" class="dynamic-card">
       <div class="dynamic-card-box">
         <button class="btn-red btn-inside-card" id="btn-credit-minus-ok">ПОНЯТНО!</button>
@@ -486,19 +546,16 @@
     </div>
 
     <!-- Нижняя панель -->
-    <div class="bottom-bar">
-      <!-- Слева: Банк -->
+    <div class="bottom-bar" id="bottom-bar-el">
       <button class="bar-btn" id="btn-bank-id">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_bank.png" alt="Bank" class="bar-btn-icon">
         <span class="bar-btn-text">BANK</span>
       </button>
 
-      <!-- Центр: Игральный кубик -->
       <button class="dice-btn" id="btn-dice-id">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_cub.png" alt="Dice" class="dice-icon" id="dice-img-id">
       </button>
 
-      <!-- Справа: Активы -->
       <button class="bar-btn" id="btn-active-id">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_active.png" alt="Active" class="bar-btn-icon">
         <span class="bar-btn-text">ACTIVE</span>
@@ -522,7 +579,6 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 
-    // Состояние игрока
     let playerBalance = 1500;
 
     function updateBalanceUI() {
@@ -554,22 +610,18 @@
       document.getElementById('btn-enter-id').addEventListener('click', enterGame);
       document.getElementById('btn-start-id').addEventListener('click', startGame);
 
-      // --- ЛОГИКА БАНКА ---
       const bankModal = document.getElementById('bank-modal');
       const creditPlusModal = document.getElementById('credit-plus-modal');
       const creditMinusModal = document.getElementById('credit-minus-modal');
 
-      // Клик по BANK на нижней панели
       document.getElementById('btn-bank-id').addEventListener('click', () => {
         bankModal.classList.add('active');
       });
 
-      // Кнопка НАЗАД в окне Банка
       document.getElementById('btn-bank-back').addEventListener('click', () => {
         bankModal.classList.remove('active');
       });
 
-      // Кнопка ПОЛУЧИТЬ (взять кредит +1000)
       document.getElementById('btn-get-credit').addEventListener('click', () => {
         bankModal.classList.remove('active');
         playerBalance += 1000;
@@ -578,7 +630,6 @@
         triggerConfetti();
       });
 
-      // Кнопка ПОГАСИТЬ (погасить кредит -1000)
       document.getElementById('btn-repay-credit').addEventListener('click', () => {
         bankModal.classList.remove('active');
         playerBalance -= 1000;
@@ -587,22 +638,18 @@
         triggerConfetti();
       });
 
-      // Кнопка ПОНЯТНО! для credit_plus
       document.getElementById('btn-credit-plus-ok').addEventListener('click', () => {
         creditPlusModal.classList.remove('active');
       });
 
-      // Кнопка ПОНЯТНО! для credit_minus
       document.getElementById('btn-credit-minus-ok').addEventListener('click', () => {
         creditMinusModal.classList.remove('active');
       });
-      // --------------------
 
       document.getElementById('btn-active-id').addEventListener('click', () => {
         console.log('Клик по ACTIVE');
       });
 
-      // Логика броска кубика
       const diceBtn = document.getElementById('btn-dice-id');
       const diceImg = document.getElementById('dice-img-id');
       let isRolling = false;
@@ -641,10 +688,18 @@
     }
 
     function startGame() {
+      // Скрываем стартовую карточку
       const modal = document.getElementById('hello-modal');
       if (modal) {
         modal.style.display = 'none';
       }
+
+      // Показываем верхний и нижний бар
+      document.getElementById('top-bar-el').classList.add('active-bar');
+      document.getElementById('bottom-bar-el').classList.add('active-bar');
+
+      // Показываем объемную карту
+      document.getElementById('board-container').classList.add('active');
     }
   </script>
 </body>
