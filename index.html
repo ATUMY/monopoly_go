@@ -26,7 +26,7 @@
       background-repeat: no-repeat;
     }
 
-    .active { display: flex; }
+    .active { display: flex !important; }
 
     #auth-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_start.png');
@@ -88,13 +88,13 @@
   <!-- 1. Экран входа -->
   <div id="auth-screen" class="screen active">
     <input type="text" id="username-input" class="input-field" placeholder="Введите имя..." maxlength="15">
-    <button class="btn-red" onclick="enterGame()">ВОЙТИ</button>
+    <button class="btn-red" id="btn-enter-id">ВОЙТИ</button>
   </div>
 
   <!-- 2. Экран приветствия -->
   <div id="hello-screen" class="screen">
     <div id="welcome-message" class="welcome-text">Привет!</div>
-    <button class="btn-red" onclick="goToRoom()">НАЧАТЬ ИГРУ</button>
+    <button class="btn-red" id="btn-start-id">НАЧАТЬ ИГРУ</button>
   </div>
 
   <!-- 3. Экран игровой комнаты -->
@@ -103,25 +103,41 @@
   </div>
 
   <script>
+    // Инициализация Telegram Mini App
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
     // Подключение Supabase
     const SUPABASE_URL = 'https://lfqkojfgkgrzvcrritpd.supabase.co'; 
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcWtvamZna2dyenZjcnJpdHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MjYzNzYsImV4cCI6MjEwMTQwMjM3Nn0.VAgSdmfH-Gke95a_sNv7hvs2XhPNWAs9CRTBIuLVfFc'; 
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Инициализация Telegram Mini App
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    // Автоподстановка имени из Telegram
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      const user = tg.initDataUnsafe.user;
-      document.getElementById('username-input').value = user.first_name || '';
+    let supabaseClient = null;
+    if (window.supabase) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 
+    // Автоподстановка имени из Telegram
+    document.addEventListener('DOMContentLoaded', () => {
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const user = tg.initDataUnsafe.user;
+        const input = document.getElementById('username-input');
+        if (input && user.first_name) {
+          input.value = user.first_name;
+        }
+      }
+
+      // Привязываем клики к кнопкам
+      document.getElementById('btn-enter-id').addEventListener('click', enterGame);
+      document.getElementById('btn-start-id').addEventListener('click', goToRoom);
+    });
+
     function enterGame() {
-      const name = document.getElementById('username-input').value.trim();
+      const input = document.getElementById('username-input');
+      const name = input ? input.value.trim() : '';
+      
       if (!name) {
         alert('Пожалуйста, введите имя!');
         return;
