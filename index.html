@@ -233,6 +233,42 @@
     .bar-btn:active .bar-btn-icon {
       transform: scale(0.9);
     }
+
+    /* Центральная кнопка: Кубик */
+    .dice-btn {
+      position: relative;
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -15px;
+    }
+
+    .dice-icon {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    /* Анимация вращения с блюром и уменьшением */
+    .dice-icon.rolling {
+      animation: rollAnimation 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes rollAnimation {
+      0% {
+        transform: scale(0.7) rotate(0deg);
+        filter: blur(4px);
+      }
+      100% {
+        transform: scale(0.7) rotate(1440deg);
+        filter: blur(4px);
+      }
+    }
   </style>
 </head>
 <body>
@@ -280,16 +316,15 @@
         <span class="bar-btn-text">BANK</span>
       </button>
 
-      <!-- Центр: Активы -->
+      <!-- Центр: Игральный кубик -->
+      <button class="dice-btn" id="btn-dice-id">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_cub.png" alt="Dice" class="dice-icon" id="dice-img-id">
+      </button>
+
+      <!-- Справа: Активы -->
       <button class="bar-btn" id="btn-active-id">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_active.png" alt="Active" class="bar-btn-icon">
         <span class="bar-btn-text">ACTIVE</span>
-      </button>
-
-      <!-- Справа: Настройки -->
-      <button class="bar-btn" id="btn-settings-id">
-        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_setting.png" alt="Settings" class="bar-btn-icon">
-        <span class="bar-btn-text">SETTINGS</span>
       </button>
     </div>
 
@@ -331,9 +366,25 @@
         console.log('Клик по ACTIVE');
       });
 
-      document.getElementById('btn-settings-id').addEventListener('click', () => {
-        console.log('Клик по SETTINGS');
-      });
+      // Логика броска кубика
+      const diceBtn = document.getElementById('btn-dice-id');
+      const diceImg = document.getElementById('dice-img-id');
+      let isRolling = false;
+
+      if (diceBtn && diceImg) {
+        diceBtn.addEventListener('click', () => {
+          if (isRolling) return; // Защита от спам-кликов во время анимации
+          
+          isRolling = true;
+          diceImg.classList.add('rolling');
+
+          // Ровно через 2 секунды возвращаем в исходное положение
+          setTimeout(() => {
+            diceImg.classList.remove('rolling');
+            isRolling = false;
+          }, 2000);
+        });
+      }
     });
 
     function enterGame() {
