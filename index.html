@@ -37,9 +37,121 @@
     /* 2. Экран игровой комнаты */
     #room-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
+      position: relative;
     }
 
-    /* Карточка с новой картинкой icon_hello1.png */
+    /* Верхняя панель (Header Bar) */
+    .top-bar {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92vw;
+      max-width: 440px;
+      height: 54px;
+      background-color: #f1e9d6;
+      border-radius: 27px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      z-index: 10;
+    }
+
+    /* Левая часть: аватар и инфо */
+    .bar-player {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .player-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .player-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .player-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: #222222;
+      line-height: 1.1;
+    }
+
+    .online-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #27ae60;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .online-dot {
+      width: 7px;
+      height: 7px;
+      background-color: #2ecc71;
+      border-radius: 50%;
+      animation: blink 1.5s infinite ease-in-out;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.85); }
+    }
+
+    /* Центральная часть: Баланс */
+    .bar-balance {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .money-icon {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+
+    .balance-text {
+      font-size: 16px;
+      font-weight: 800;
+      color: #27ae60;
+    }
+
+    /* Правая часть: Кнопка настроек */
+    .btn-settings {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+    }
+
+    .settings-icon {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+      transition: transform 0.2s;
+    }
+
+    .btn-settings:active .settings-icon {
+      transform: rotate(30deg) scale(0.95);
+    }
+
+    /* Карточка с картинкой icon_hello1.png */
     .hello-card {
       width: 95vw;
       max-width: 440px;
@@ -48,9 +160,9 @@
       background-size: contain;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end; /* Выравниваем содержимое по нижнему краю */
+      justify-content: flex-end;
       align-items: center;
-      padding: 0 20px 25px 20px; /* Отступ 25px снизу удерживает кнопку в нужном положении */
+      padding: 0 20px 25px 20px;
     }
 
     .input-field {
@@ -104,8 +216,36 @@
     <button class="btn-red" id="btn-enter-id">ВОЙТИ</button>
   </div>
 
-  <!-- 2. Игровая комната с карточкой без текста -->
+  <!-- 2. Игровая комната -->
   <div id="room-screen" class="screen">
+    
+    <!-- Верхняя панель -->
+    <div class="top-bar">
+      <!-- Левый блок: Игрок -->
+      <div class="bar-player">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_player.png" alt="Player" class="player-icon">
+        <div class="player-info">
+          <span id="header-user-name" class="player-name">Игрок</span>
+          <div class="online-status">
+            <span class="online-dot"></span>
+            <span>online</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Центральный блок: Деньги -->
+      <div class="bar-balance">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_money.png" alt="Money" class="money-icon">
+        <span class="balance-text">1500 €</span>
+      </div>
+
+      <!-- Правый блок: Настройки -->
+      <button class="btn-settings" id="btn-settings-id" aria-label="Настройки">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_setting.png" alt="Settings" class="settings-icon">
+      </button>
+    </div>
+
+    <!-- Карточка в центре -->
     <div id="hello-modal" class="hello-card">
       <button class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
     </div>
@@ -137,6 +277,10 @@
 
       document.getElementById('btn-enter-id').addEventListener('click', enterGame);
       document.getElementById('btn-start-id').addEventListener('click', startGame);
+      
+      document.getElementById('btn-settings-id').addEventListener('click', () => {
+        console.log('Клик по настройкам');
+      });
     });
 
     function enterGame() {
@@ -149,6 +293,7 @@
       }
       
       localStorage.setItem('monopoly_user_name', name);
+      document.getElementById('header-user-name').textContent = name;
 
       document.getElementById('auth-screen').classList.remove('active');
       document.getElementById('room-screen').classList.add('active');
