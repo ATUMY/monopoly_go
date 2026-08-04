@@ -1,1 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Monopoly TG</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; }
+    
+    #auth-screen {
+      width: 100vw;
+      height: 100vh;
+      background: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_start.png') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
 
+    .input-field {
+      width: 80%;
+      max-width: 300px;
+      padding: 14px 18px;
+      font-size: 18px;
+      border: 2px solid #ffffff;
+      border-radius: 12px;
+      outline: none;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      margin-bottom: 15px;
+    }
+
+    .btn-enter {
+      width: 80%;
+      max-width: 300px;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #e74c3c;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: background 0.2s;
+    }
+
+    .btn-enter:active {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Экран входа -->
+  <div id="auth-screen">
+    <input type="text" id="username-input" class="input-field" placeholder="Введите имя..." maxlength="15">
+    <button class="btn-enter" onclick="enterGame()">ВОЙТИ</button>
+  </div>
+
+  <script>
+    // ==========================================
+    // ВСТАВЛЯЙ СВОИ ДАННЫЕ ИЗ SUPABASE СЮДА:
+    // ==========================================
+    const SUPABASE_URL = 'https://lfqkojfgkgrzvcrritpd.supabase.co'; // Вставь свой Project URL
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcWtvamZna2dyenZjcnJpdHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MjYzNzYsImV4cCI6MjEwMTQwMjM3Nn0.VAgSdmfH-Gke95a_sNv7hvs2XhPNWAs9CRTBIuLVfFc';            // Вставь свой anon/public key
+    // ==========================================
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Инициализация Telegram Mini App
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // Автоподстановка имени из Telegram
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      const user = tg.initDataUnsafe.user;
+      document.getElementById('username-input').value = user.first_name || '';
+    }
+
+    // Функция входа
+    function enterGame() {
+      const name = document.getElementById('username-input').value.trim();
+      if (!name) {
+        alert('Пожалуйста, введите имя!');
+        return;
+      }
+      
+      localStorage.setItem('monopoly_user_name', name);
+      alert('Добро пожаловать, ' + name + '!');
+    }
+  </script>
+</body>
+  </html>
+  
