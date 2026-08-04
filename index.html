@@ -38,7 +38,6 @@
     #room-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
       position: relative;
-      perspective: 1000px; /* Для 3D-объема */
     }
 
     /* Скрытие панелей по умолчанию */
@@ -152,24 +151,17 @@
       z-index: 20;
     }
 
-    /* Объемное игровое поле (Карта) */
+    /* Простая карта по центру */
     .game-board-container {
       display: none;
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) rotateX(25deg) rotateZ(-2deg);
-      width: 85vw;
-      max-width: 380px;
-      height: 85vw;
-      max-height: 380px;
-      border-radius: 20px;
-      box-shadow: 
-        0 20px 30px rgba(0, 0, 0, 0.5),
-        0 10px 0px #b8a280,
-        0 15px 0px #8c785c;
-      animation: barGlow 2s infinite ease-in-out;
-      transition: all 0.3s ease;
+      transform: translate(-50%, -50%);
+      width: 90vw;
+      max-width: 400px;
+      height: 90vw;
+      max-height: 400px;
       z-index: 1;
     }
 
@@ -181,23 +173,6 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      border-radius: 18px;
-    }
-
-    /* Сияние в цвет бара (#f1e9d6) */
-    @keyframes barGlow {
-      0%, 100% {
-        box-shadow: 
-          0 20px 30px rgba(0, 0, 0, 0.5),
-          0 10px 0px #b8a280,
-          0 0 15px 4px rgba(241, 233, 214, 0.4);
-      }
-      50% {
-        box-shadow: 
-          0 20px 30px rgba(0, 0, 0, 0.5),
-          0 10px 0px #b8a280,
-          0 0 35px 12px rgba(241, 233, 214, 0.95);
-      }
     }
 
     /* Модальное окно Банка */
@@ -509,7 +484,7 @@
       <button class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
     </div>
 
-    <!-- Объемная игровая карта в центре -->
+    <!-- Игровая карта в центре -->
     <div id="board-container" class="game-board-container">
       <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/carta.png" alt="Game Board" class="game-board-img">
     </div>
@@ -688,17 +663,14 @@
     }
 
     function startGame() {
-      // Скрываем стартовую карточку
       const modal = document.getElementById('hello-modal');
       if (modal) {
         modal.style.display = 'none';
       }
 
-      // Показываем верхний и нижний бар
       document.getElementById('top-bar-el').classList.add('active-bar');
       document.getElementById('bottom-bar-el').classList.add('active-bar');
 
-      // Показываем объемную карту
       document.getElementById('board-container').classList.add('active');
     }
   </script>
