@@ -166,7 +166,6 @@
       padding: 0 20px 25px 20px;
     }
 
-    /* Модальное окно взаимодействия с клеткой */
     .cell-modal {
       display: none;
       position: absolute;
@@ -207,7 +206,6 @@
       line-height: 1.4;
     }
 
-    /* Модальное окно Банка */
     .bank-modal {
       display: none;
       position: absolute;
@@ -532,9 +530,8 @@
 
     let playerBalance = 1500;
     let currentPosition = 0; 
-    let ownedProperties = {}; // индекс клетки -> владелец / цена
+    let ownedProperties = {};
 
-    // Полная карта из 40 клеток со всеми вашими улицами, вокзалами и событиями
     const boardCells = {
       0: { name: "СТАРТ", type: "start", desc: "Стартовая клетка. Проход дает +200 €." },
       1: { name: "Детройт", type: "property", price: 60, rent: 2, group: "brown" },
@@ -607,7 +604,23 @@
       if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
 
-    // Обработка приземления на клетку
+    function enterGame() {
+      const input = document.getElementById('username-input');
+      const name = input ? input.value.trim() : '';
+      
+      if (!name) {
+        alert('Пожалуйста, введите имя!');
+        return;
+      }
+      
+      document.getElementById('header-user-name').textContent = name;
+      document.getElementById('auth-screen').classList.remove('active');
+      document.getElementById('room-screen').classList.add('active');
+
+      updateDuckPosition();
+      triggerConfetti();
+    }
+
     function handleCellLanding() {
       const cell = boardCells[currentPosition];
       const modal = document.getElementById('cell-modal');
@@ -620,7 +633,6 @@
 
       if (cell.type === 'property' || cell.type === 'railroad' || cell.type === 'utility') {
         if (ownedProperties[currentPosition]) {
-          // Чужая или своя улица
           const rent = cell.rent;
           descEl.textContent = `Это имущество принадлежит игроку. Вы платите аренду: ${rent} €`;
           playerBalance -= rent;
@@ -633,9 +645,4 @@
           okBtn.onclick = () => modal.classList.remove('active');
           btnContainer.appendChild(okBtn);
         } else {
-          // Предложение купить
-          descEl.textContent = `Цена покупки: ${cell.price} €\nБазовая аренда: ${cell.rent} €`;
-          
-          const buyBtn = document.createElement('button');
-          buyBtn.className = 'btn-red';
-          buyBtn.style.cssText = "flex: 1; padding: 10px; font-size: 14px; background-color:
+          descEl.textContent = `Цена покупки: ${cell.price} €\nБазовая аренда: ${cel
