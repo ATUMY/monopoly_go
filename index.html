@@ -142,6 +142,144 @@
       padding: 0 20px 25px 20px;
     }
 
+    /* Модальное окно Банка */
+    .bank-modal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .bank-modal.active {
+      display: flex;
+    }
+
+    .bank-content {
+      width: 90vw;
+      max-width: 400px;
+      height: 380px;
+      background-color: #f1e9d6;
+      border-radius: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 25px 20px;
+      align-items: center;
+      position: relative;
+    }
+
+    .bank-columns {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .bank-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .bank-action-icon {
+      width: 75px;
+      height: 75px;
+      object-fit: contain;
+    }
+
+    /* Кнопки банка */
+    .btn-bank-get {
+      background-color: #27ae60;
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: transform 0.1s;
+    }
+    .btn-bank-get:active { transform: scale(0.95); }
+
+    .btn-bank-repay {
+      background-color: #e74c3c;
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: transform 0.1s;
+    }
+    .btn-bank-repay:active { transform: scale(0.95); }
+
+    .btn-bank-back {
+      background-color: #f1c40f;
+      color: #222222;
+      border: none;
+      width: 80%;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: transform 0.1s;
+    }
+    .btn-bank-back:active { transform: scale(0.95); }
+
+    /* Универсальные динамические карточки (Credit Plus / Minus) */
+    .dynamic-card {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 150;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .dynamic-card.active {
+      display: flex;
+    }
+
+    .dynamic-card-box {
+      width: 95vw;
+      max-width: 440px;
+      height: 360px;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: contain;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 20px 25px 20px;
+    }
+
+    #credit-plus-modal .dynamic-card-box {
+      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/credit_plus.png');
+    }
+
+    #credit-minus-modal .dynamic-card-box {
+      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/credit_minus.png');
+    }
+
     .input-field {
       width: 80%;
       max-width: 300px;
@@ -254,7 +392,6 @@
       transition: transform 0.2s ease, filter 0.2s ease;
     }
 
-    /* Анимация вращения с блюром и уменьшением */
     .dice-icon.rolling {
       animation: rollAnimation 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
     }
@@ -299,13 +436,47 @@
       <!-- Правый блок: Баланс -->
       <div class="bar-balance">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_money.png" alt="Money" class="money-icon">
-        <span class="balance-text">1500 €</span>
+        <span class="balance-text" id="balance-display">1500 €</span>
       </div>
     </div>
 
     <!-- Карточка в центре -->
     <div id="hello-modal" class="hello-card">
       <button class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
+    </div>
+
+    <!-- Модальное окно BANK -->
+    <div id="bank-modal" class="bank-modal">
+      <div class="bank-content">
+        <div class="bank-columns">
+          <!-- Центр слева: Кредит плюс -->
+          <div class="bank-item">
+            <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/bank_plus.png" alt="Bank Plus" class="bank-action-icon">
+            <button class="btn-bank-get" id="btn-get-credit">ПОЛУЧИТЬ</button>
+          </div>
+          <!-- Центр справа: Кредит минус -->
+          <div class="bank-item">
+            <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/bank_minus.png" alt="Bank Minus" class="bank-action-icon">
+            <button class="btn-bank-repay" id="btn-repay-credit">ПОГАСИТЬ</button>
+          </div>
+        </div>
+        <!-- Внизу по центру: Назад -->
+        <button class="btn-bank-back" id="btn-bank-back">НАЗАД</button>
+      </div>
+    </div>
+
+    <!-- Карточка результата: ПОЛУЧИТЬ КРЕДИТ (credit_plus.png) -->
+    <div id="credit-plus-modal" class="dynamic-card">
+      <div class="dynamic-card-box">
+        <button class="btn-red btn-inside-card" id="btn-credit-plus-ok">ПОНЯТНО!</button>
+      </div>
+    </div>
+
+    <!-- Карточка результата: ПОГАСИТЬ КРЕДИТ (credit_minus.png) -->
+    <div id="credit-minus-modal" class="dynamic-card">
+      <div class="dynamic-card-box">
+        <button class="btn-red btn-inside-card" id="btn-credit-minus-ok">ПОНЯТНО!</button>
+      </div>
     </div>
 
     <!-- Нижняя панель -->
@@ -345,6 +516,16 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 
+    // Состояние игрока
+    let playerBalance = 1500;
+
+    function updateBalanceUI() {
+      const balanceEl = document.getElementById('balance-display');
+      if (balanceEl) {
+        balanceEl.textContent = playerBalance + ' €';
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const user = tg.initDataUnsafe.user;
@@ -357,10 +538,47 @@
       document.getElementById('btn-enter-id').addEventListener('click', enterGame);
       document.getElementById('btn-start-id').addEventListener('click', startGame);
 
-      // Обработчики для нижних кнопок
+      // --- ЛОГИКА БАНКА ---
+      const bankModal = document.getElementById('bank-modal');
+      const creditPlusModal = document.getElementById('credit-plus-modal');
+      const creditMinusModal = document.getElementById('credit-minus-modal');
+
+      // Клик по BANK на нижней панели
       document.getElementById('btn-bank-id').addEventListener('click', () => {
-        console.log('Клик по BANK');
+        bankModal.classList.add('active');
       });
+
+      // Кнопка НАЗАД в окне Банка
+      document.getElementById('btn-bank-back').addEventListener('click', () => {
+        bankModal.classList.remove('active');
+      });
+
+      // Кнопка ПОЛУЧИТЬ (взять кредит +1000)
+      document.getElementById('btn-get-credit').addEventListener('click', () => {
+        bankModal.classList.remove('active');
+        playerBalance += 1000;
+        updateBalanceUI();
+        creditPlusModal.classList.add('active');
+      });
+
+      // Кнопка ПОГАСИТЬ (погасить кредит -1000)
+      document.getElementById('btn-repay-credit').addEventListener('click', () => {
+        bankModal.classList.remove('active');
+        playerBalance -= 1000;
+        updateBalanceUI();
+        creditMinusModal.classList.add('active');
+      });
+
+      // Кнопка ПОНЯТНО! для credit_plus
+      document.getElementById('btn-credit-plus-ok').addEventListener('click', () => {
+        creditPlusModal.classList.remove('active');
+      });
+
+      // Кнопка ПОНЯТНО! для credit_minus
+      document.getElementById('btn-credit-minus-ok').addEventListener('click', () => {
+        creditMinusModal.classList.remove('active');
+      });
+      // --------------------
 
       document.getElementById('btn-active-id').addEventListener('click', () => {
         console.log('Клик по ACTIVE');
@@ -373,12 +591,11 @@
 
       if (diceBtn && diceImg) {
         diceBtn.addEventListener('click', () => {
-          if (isRolling) return; // Защита от спам-кликов во время анимации
+          if (isRolling) return; 
           
           isRolling = true;
           diceImg.classList.add('rolling');
 
-          // Ровно через 2 секунды возвращаем в исходное положение
           setTimeout(() => {
             diceImg.classList.remove('rolling');
             isRolling = false;
