@@ -28,16 +28,30 @@
 
     .active { display: flex !important; }
 
+    /* 1. Экран авторизации */
     #auth-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_start.png');
     }
 
-    #hello-screen {
-      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello.png');
-    }
-
+    /* 2. Экран игровой комнаты */
     #room-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
+    }
+
+    /* Блок приветствия (карточка + кнопка под ней) */
+    .hello-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    /* Небольшая карточка приветствия по центру */
+    .hello-card {
+      width: 260px;
+      height: 180px;
+      background: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello.png') no-repeat center center;
+      background-size: contain;
     }
 
     .input-field {
@@ -66,20 +80,18 @@
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
     }
 
     .btn-red:active {
       background-color: #c0392b;
+      transform: scale(0.98);
     }
 
-    .welcome-text {
-      color: #ffffff;
-      font-size: 24px;
-      font-weight: bold;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      margin-bottom: 30px;
-      text-align: center;
+    .btn-under-card {
+      width: 220px;
+      padding: 12px;
+      font-size: 16px;
     }
   </style>
 </head>
@@ -91,15 +103,12 @@
     <button class="btn-red" id="btn-enter-id">ВОЙТИ</button>
   </div>
 
-  <!-- 2. Экран приветствия -->
-  <div id="hello-screen" class="screen">
-    <div id="welcome-message" class="welcome-text">Привет!</div>
-    <button class="btn-red" id="btn-start-id">НАЧАТЬ ИГРУ</button>
-  </div>
-
-  <!-- 3. Экран игровой комнаты -->
+  <!-- 2. Игровая комната с карточкой и кнопкой ПОД НЕЙ -->
   <div id="room-screen" class="screen">
-    <div class="welcome-text">Игровая комната</div>
+    <div id="hello-modal" class="hello-container">
+      <div class="hello-card"></div>
+      <button class="btn-red btn-under-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
+    </div>
   </div>
 
   <script>
@@ -119,8 +128,8 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 
-    // Автоподстановка имени из Telegram
     document.addEventListener('DOMContentLoaded', () => {
+      // Подстановка имени из TG
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const user = tg.initDataUnsafe.user;
         const input = document.getElementById('username-input');
@@ -129,9 +138,9 @@
         }
       }
 
-      // Привязываем клики к кнопкам
+      // Кнопки
       document.getElementById('btn-enter-id').addEventListener('click', enterGame);
-      document.getElementById('btn-start-id').addEventListener('click', goToRoom);
+      document.getElementById('btn-start-id').addEventListener('click', startGame);
     });
 
     function enterGame() {
@@ -144,17 +153,18 @@
       }
       
       localStorage.setItem('monopoly_user_name', name);
-      document.getElementById('welcome-message').innerText = 'Привет, ' + name + '!';
 
-      // Переход на экран приветствия
+      // Переход в комнату
       document.getElementById('auth-screen').classList.remove('active');
-      document.getElementById('hello-screen').classList.add('active');
+      document.getElementById('room-screen').classList.add('active');
     }
 
-    function goToRoom() {
-      // Переход в игровую комнату
-      document.getElementById('hello-screen').classList.remove('active');
-      document.getElementById('room-screen').classList.add('active');
+    function startGame() {
+      // Скрываем блок приветствия (карточку + кнопку под ней)
+      const modal = document.getElementById('hello-modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
     }
   </script>
 </body>
