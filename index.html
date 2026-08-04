@@ -3,23 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Monopoly TG</title>
+  <title>Monopoly TG Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; }
     
-    #auth-screen {
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
-      background: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_start.png') no-repeat center center;
-      background-size: cover;
-      display: flex;
+      display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       padding: 20px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .active { display: flex; }
+
+    #auth-screen {
+      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_start.png');
+    }
+
+    #hello-screen {
+      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello.png');
+    }
+
+    #room-screen {
+      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
     }
 
     .input-field {
@@ -36,7 +54,7 @@
       margin-bottom: 15px;
     }
 
-    .btn-enter {
+    .btn-red {
       width: 80%;
       max-width: 300px;
       padding: 14px;
@@ -51,38 +69,44 @@
       transition: background 0.2s;
     }
 
-    .btn-enter:active {
+    .btn-red:active {
       background-color: #c0392b;
+    }
+
+    .welcome-text {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      margin-bottom: 30px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
 
-  <!-- Экран входа -->
-  <div id="auth-screen">
+  <!-- 1. Экран входа -->
+  <div id="auth-screen" class="screen active">
     <input type="text" id="username-input" class="input-field" placeholder="Введите имя..." maxlength="15">
-    <button class="btn-enter" onclick="enterGame()">ВОЙТИ</button>
+    <button class="btn-red" onclick="enterGame()">ВОЙТИ</button>
   </div>
 
-    <!-- 2. Экран приветствия -->
-  <div id="hello-screen" class="screen" style="display:none; width:100vw; height100vh; background:url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello.png') no-repeat center/cover; flex-direction:column; justify-content:center; align-items:center;">
-    <div id="welcome-message" style="color:#fff; font-size:24px; font-weight:bold; margin-bottom:20px;">Привет!</div>
-    <button class="btn-enter" onclick="goToRoom()">НАЧАТЬ ИГРУ</button>
+  <!-- 2. Экран приветствия -->
+  <div id="hello-screen" class="screen">
+    <div id="welcome-message" class="welcome-text">Привет!</div>
+    <button class="btn-red" onclick="goToRoom()">НАЧАТЬ ИГРУ</button>
   </div>
 
-  <!-- 3. Игровая комната -->
-  <div id="room-screen" class="screen" style="display:none; width:100vw; height:100vh; background:url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png') no-repeat center/cover; flex-direction:column; justify-content:center; align-items:center;">
-    <div style="color:#fff; font-size:24px; font-weight:bold;">Игровая комната</div>
+  <!-- 3. Экран игровой комнаты -->
+  <div id="room-screen" class="screen">
+    <div class="welcome-text">Игровая комната</div>
   </div>
-  
+
   <script>
-    // ==========================================
-    // ВСТАВЛЯЙ СВОИ ДАННЫЕ ИЗ SUPABASE СЮДА:
-    // ==========================================
-    const SUPABASE_URL = 'https://lfqkojfgkgrzvcrritpd.supabase.co'; // Вставь свой Project URL
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcWtvamZna2dyenZjcnJpdHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MjYzNzYsImV4cCI6MjEwMTQwMjM3Nn0.VAgSdmfH-Gke95a_sNv7hvs2XhPNWAs9CRTBIuLVfFc';            // Вставь свой anon/public key
-    // ==========================================
-
+    // Подключение Supabase
+    const SUPABASE_URL = 'https://lfqkojfgkgrzvcrritpd.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcWtvamZna2dyenZjcnJpdHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MjYzNzYsImV4cCI6MjEwMTQwMjM3Nn0.VAgSdmfH-Gke95a_sNv7hvs2XhPNWAs9CRTBIuLVfFc'; 
+    
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Инициализация Telegram Mini App
@@ -96,7 +120,6 @@
       document.getElementById('username-input').value = user.first_name || '';
     }
 
-    // Функция входа
     function enterGame() {
       const name = document.getElementById('username-input').value.trim();
       if (!name) {
@@ -105,26 +128,18 @@
       }
       
       localStorage.setItem('monopoly_user_name', name);
-      alert('Добро пожаловать, ' + name + '!');
-    }
-    // Обновляем функцию enterGame и добавляем переход в комнату
-    const oldEnterGame = enterGame;
-    enterGame = function() {
-      const name = document.getElementById('username-input').value.trim();
-      if (!name) { alert('Пожалуйста, введите имя!'); return; }
-      localStorage.setItem('monopoly_user_name', name);
       document.getElementById('welcome-message').innerText = 'Привет, ' + name + '!';
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('hello-screen').style.display = 'flex';
-    };
+
+      // Переход на экран приветствия
+      document.getElementById('auth-screen').classList.remove('active');
+      document.getElementById('hello-screen').classList.add('active');
+    }
 
     function goToRoom() {
-      document.getElementById('hello-screen').style.display = 'none';
-      document.getElementById('room-screen').style.display = 'flex';
+      // Переход в игровую комнату
+      document.getElementById('hello-screen').classList.remove('active');
+      document.getElementById('room-screen').classList.add('active');
     }
-      
-
   </script>
 </body>
-  </html>
-  
+</html>
