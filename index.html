@@ -35,6 +35,14 @@
       z-index: 50;
     }
 
+    .auth-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
     /* 2. Экран игровой комнаты */
     #room-screen {
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
@@ -68,7 +76,6 @@
       display: flex;
     }
 
-    /* Левая часть: аватар и инфо */
     .bar-player {
       display: flex;
       align-items: center;
@@ -118,7 +125,6 @@
       50% { opacity: 0.3; transform: scale(0.85); }
     }
 
-    /* Правая часть: Баланс */
     .bar-balance {
       display: flex;
       align-items: center;
@@ -152,7 +158,7 @@
       z-index: 20;
     }
 
-    /* Растянутая карта по центру */
+    /* Карта по центру */
     .game-board-container {
       display: none;
       position: absolute;
@@ -256,9 +262,7 @@
       border-radius: 10px;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      transition: transform 0.1s;
     }
-    .btn-bank-get:active { transform: scale(0.95); }
 
     .btn-bank-repay {
       background-color: #e74c3c;
@@ -270,9 +274,7 @@
       border-radius: 10px;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      transition: transform 0.1s;
     }
-    .btn-bank-repay:active { transform: scale(0.95); }
 
     .btn-bank-back {
       background-color: #e74c3c;
@@ -285,11 +287,6 @@
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      transition: background 0.2s, transform 0.1s;
-    }
-    .btn-bank-back:active {
-      background-color: #c0392b;
-      transform: scale(0.95);
     }
 
     /* Динамические карточки */
@@ -358,12 +355,7 @@
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: background 0.2s, transform 0.1s;
-    }
-
-    .btn-red:active {
-      background-color: #c0392b;
-      transform: scale(0.98);
+      touch-action: manipulation;
     }
 
     .btn-inside-card {
@@ -373,7 +365,7 @@
       font-size: 17px;
     }
 
-    /* Нижняя панель (Bottom Bar) */
+    /* Нижняя панель */
     .bottom-bar {
       position: absolute;
       bottom: 20px;
@@ -412,21 +404,14 @@
       width: 32px;
       height: 32px;
       object-fit: contain;
-      transition: transform 0.15s ease;
     }
 
     .bar-btn-text {
       font-size: 11px;
       font-weight: 800;
       color: #222222;
-      letter-spacing: 0.5px;
     }
 
-    .bar-btn:active .bar-btn-icon {
-      transform: scale(0.9);
-    }
-
-    /* Кубик */
     .dice-btn {
       position: relative;
       background: none;
@@ -443,7 +428,6 @@
       width: 60px;
       height: 60px;
       object-fit: contain;
-      transition: transform 0.2s ease, filter 0.2s ease;
     }
 
     .dice-icon.rolling {
@@ -451,14 +435,8 @@
     }
 
     @keyframes rollAnimation {
-      0% {
-        transform: scale(0.7) rotate(0deg);
-        filter: blur(4px);
-      }
-      100% {
-        transform: scale(0.7) rotate(1440deg);
-        filter: blur(4px);
-      }
+      0% { transform: scale(0.7) rotate(0deg); filter: blur(4px); }
+      100% { transform: scale(0.7) rotate(1440deg); filter: blur(4px); }
     }
   </style>
 </head>
@@ -466,14 +444,15 @@
 
   <!-- 1. Экран входа -->
   <div id="auth-screen" class="screen active">
-    <input type="text" id="username-input" class="input-field" placeholder="Введите имя..." maxlength="15">
-    <button class="btn-red" id="btn-enter-id">ВОЙТИ</button>
+    <form id="auth-form" class="auth-form" onsubmit="handleEnterSubmit(event)">
+      <input type="text" id="username-input" class="input-field" placeholder="Введите имя..." maxlength="15" required autocomplete="off">
+      <button type="submit" class="btn-red" id="btn-enter-id">ВОЙТИ</button>
+    </form>
   </div>
 
   <!-- 2. Игровая комната -->
   <div id="room-screen" class="screen">
     
-    <!-- Верхняя панель -->
     <div class="top-bar" id="top-bar-el">
       <div class="bar-player">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_player.png" alt="Player" class="player-icon">
@@ -492,61 +471,54 @@
       </div>
     </div>
 
-    <!-- Карточка приветствия -->
     <div id="hello-modal" class="hello-card">
-      <button class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
+      <button type="button" class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
     </div>
 
-    <!-- Игровая карта по центру -->
     <div id="board-container" class="game-board-container">
       <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/carta.png" alt="Game Board" class="game-board-img">
-      <!-- Фишка Уточка -->
       <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_utka.png" alt="Utka Token" id="player-token" class="player-token">
     </div>
 
-    <!-- Модальное окно BANK -->
     <div id="bank-modal" class="bank-modal">
       <div class="bank-content">
         <div class="bank-columns">
           <div class="bank-item">
             <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/bank_plus.png" alt="Bank Plus" class="bank-action-icon">
-            <button class="btn-bank-get" id="btn-get-credit">ПОЛУЧИТЬ</button>
+            <button type="button" class="btn-bank-get" id="btn-get-credit">ПОЛУЧИТЬ</button>
           </div>
           <div class="bank-item">
             <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/bank_minus.png" alt="Bank Minus" class="bank-action-icon">
-            <button class="btn-bank-repay" id="btn-repay-credit">ПОГАСИТЬ</button>
+            <button type="button" class="btn-bank-repay" id="btn-repay-credit">ПОГАСИТЬ</button>
           </div>
         </div>
-        <button class="btn-bank-back" id="btn-bank-back">НАЗАД</button>
+        <button type="button" class="btn-bank-back" id="btn-bank-back">НАЗАД</button>
       </div>
     </div>
 
-    <!-- Карточка КРЕДИТ ПЛЮС -->
     <div id="credit-plus-modal" class="dynamic-card">
       <div class="dynamic-card-box">
-        <button class="btn-red btn-inside-card" id="btn-credit-plus-ok">ПОНЯТНО!</button>
+        <button type="button" class="btn-red btn-inside-card" id="btn-credit-plus-ok">ПОНЯТНО!</button>
       </div>
     </div>
 
-    <!-- Карточка КРЕДИТ МИНУС -->
     <div id="credit-minus-modal" class="dynamic-card">
       <div class="dynamic-card-box">
-        <button class="btn-red btn-inside-card" id="btn-credit-minus-ok">ПОНЯТНО!</button>
+        <button type="button" class="btn-red btn-inside-card" id="btn-credit-minus-ok">ПОНЯТНО!</button>
       </div>
     </div>
 
-    <!-- Нижняя панель -->
     <div class="bottom-bar" id="bottom-bar-el">
-      <button class="bar-btn" id="btn-bank-id">
+      <button type="button" class="bar-btn" id="btn-bank-id">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_bank.png" alt="Bank" class="bar-btn-icon">
         <span class="bar-btn-text">BANK</span>
       </button>
 
-      <button class="dice-btn" id="btn-dice-id">
+      <button type="button" class="dice-btn" id="btn-dice-id">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_cub.png" alt="Dice" class="dice-icon" id="dice-img-id">
       </button>
 
-      <button class="bar-btn" id="btn-active-id">
+      <button type="button" class="bar-btn" id="btn-active-id">
         <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_active.png" alt="Active" class="bar-btn-icon">
         <span class="bar-btn-text">ACTIVE</span>
       </button>
@@ -555,7 +527,6 @@
   </div>
 
   <script>
-    // Инициализация Telegram WebApp
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
@@ -572,70 +543,34 @@
 
     let playerBalance = 1500;
 
-    /* Координаты 40 клеток по периметру (в % от размера карты) */
     const boardPositions = [
-      { x: 91.5, y: 91.5 }, // 0: СТАРТ (красная стрелка)
-      { x: 81.5, y: 91.5 }, // 1
-      { x: 73.0, y: 91.5 }, // 2
-      { x: 64.5, y: 91.5 }, // 3
-      { x: 56.0, y: 91.5 }, // 4
-      { x: 47.5, y: 91.5 }, // 5
-      { x: 39.0, y: 91.5 }, // 6
-      { x: 30.5, y: 91.5 }, // 7
-      { x: 22.0, y: 91.5 }, // 8
-      { x: 13.5, y: 91.5 }, // 9
-      { x: 8.5,  y: 91.5 }, // 10: Тюрьма
-      { x: 8.5,  y: 81.5 }, // 11
-      { x: 8.5,  y: 73.0 }, // 12
-      { x: 8.5,  y: 64.5 }, // 13
-      { x: 8.5,  y: 56.0 }, // 14
-      { x: 8.5,  y: 47.5 }, // 15
-      { x: 8.5,  y: 39.0 }, // 16
-      { x: 8.5,  y: 30.5 }, // 17
-      { x: 8.5,  y: 22.0 }, // 18
-      { x: 8.5,  y: 13.5 }, // 19
-      { x: 8.5,  y: 8.5  }, // 20: Бесплатная парковка
-      { x: 13.5, y: 8.5  }, // 21
-      { x: 22.0, y: 8.5  }, // 22
-      { x: 30.5, y: 8.5  }, // 23
-      { x: 39.0, y: 8.5  }, // 24
-      { x: 47.5, y: 8.5  }, // 25
-      { x: 56.0, y: 8.5  }, // 26
-      { x: 64.5, y: 8.5  }, // 27
-      { x: 73.0, y: 8.5  }, // 28
-      { x: 81.5, y: 8.5  }, // 29
-      { x: 91.5, y: 8.5  }, // 30: В тюрьму
-      { x: 91.5, y: 13.5 }, // 31
-      { x: 91.5, y: 22.0 }, // 32
-      { x: 91.5, y: 30.5 }, // 33
-      { x: 91.5, y: 39.0 }, // 34
-      { x: 91.5, y: 47.5 }, // 35
-      { x: 91.5, y: 56.0 }, // 36
-      { x: 91.5, y: 64.5 }, // 37
-      { x: 91.5, y: 73.0 }, // 38
-      { x: 91.5, y: 81.5 }  // 39
+      { x: 91.5, y: 91.5 },
+      { x: 81.5, y: 91.5 }, { x: 73.0, y: 91.5 }, { x: 64.5, y: 91.5 }, { x: 56.0, y: 91.5 },
+      { x: 47.5, y: 91.5 }, { x: 39.0, y: 91.5 }, { x: 30.5, y: 91.5 }, { x: 22.0, y: 91.5 }, { x: 13.5, y: 91.5 },
+      { x: 8.5,  y: 91.5 },
+      { x: 8.5,  y: 81.5 }, { x: 8.5,  y: 73.0 }, { x: 8.5,  y: 64.5 }, { x: 8.5,  y: 56.0 },
+      { x: 8.5,  y: 47.5 }, { x: 8.5,  y: 39.0 }, { x: 8.5,  y: 30.5 }, { x: 8.5,  y: 22.0 }, { x: 8.5,  y: 13.5 },
+      { x: 8.5,  y: 8.5  },
+      { x: 13.5, y: 8.5  }, { x: 22.0, y: 8.5  }, { x: 30.5, y: 8.5  }, { x: 39.0, y: 8.5  },
+      { x: 47.5, y: 8.5  }, { x: 56.0, y: 8.5  }, { x: 64.5, y: 8.5  }, { x: 73.0, y: 8.5  }, { x: 81.5, y: 8.5  },
+      { x: 91.5, y: 8.5  },
+      { x: 91.5, y: 13.5 }, { x: 91.5, y: 22.0 }, { x: 91.5, y: 30.5 }, { x: 91.5, y: 39.0 },
+      { x: 91.5, y: 47.5 }, { x: 91.5, y: 56.0 }, { x: 91.5, y: 64.5 }, { x: 91.5, y: 73.0 }, { x: 91.5, y: 81.5 }
     ];
 
     let currentTileIndex = 0;
 
     function updateBalanceUI() {
       const balanceEl = document.getElementById('balance-display');
-      if (balanceEl) {
-        balanceEl.textContent = playerBalance + ' €';
-      }
+      if (balanceEl) balanceEl.textContent = playerBalance + ' €';
     }
 
     function triggerConfetti() {
       if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
     }
 
-    /* Установка фишки по индексу */
     function setTokenPosition(index) {
       const token = document.getElementById('player-token');
       if (!token) return;
@@ -644,28 +579,20 @@
       token.style.top = pos.y + '%';
     }
 
-    /* Пошаговый ход */
     function moveTokenSteps(steps) {
       if (steps <= 0) return;
-      
       currentTileIndex = (currentTileIndex + 1) % boardPositions.length;
       setTokenPosition(currentTileIndex);
-
-      setTimeout(() => {
-        moveTokenSteps(steps - 1);
-      }, 350);
+      setTimeout(() => moveTokenSteps(steps - 1), 350);
     }
 
-    /* Авторизация */
+    /* Обработка входа (через Submit или Click/Touch) */
     function enterGame() {
       const input = document.getElementById('username-input');
       const name = input ? input.value.trim() : '';
       
-      if (!name) {
-        alert('Пожалуйста, введите имя!');
-        return;
-      }
-      
+      if (!name) return;
+
       localStorage.setItem('monopoly_user_name', name);
       document.getElementById('header-user-name').textContent = name;
 
@@ -675,12 +602,14 @@
       triggerConfetti();
     }
 
-    /* Нажатие кнопки НАЧАТЬ ИГРУ */
+    function handleEnterSubmit(e) {
+      if (e) e.preventDefault();
+      enterGame();
+    }
+
     function startGame() {
       const modal = document.getElementById('hello-modal');
-      if (modal) {
-        modal.style.display = 'none';
-      }
+      if (modal) modal.style.display = 'none';
 
       document.getElementById('top-bar-el').classList.add('active-bar');
       document.getElementById('bottom-bar-el').classList.add('active-bar');
@@ -688,12 +617,10 @@
       const boardContainer = document.getElementById('board-container');
       boardContainer.classList.add('active');
       
-      // Устанавливаем уточку на СТАРТ
       setTokenPosition(0);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Подстановка имени из Telegram
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const user = tg.initDataUnsafe.user;
         const input = document.getElementById('username-input');
@@ -702,21 +629,22 @@
         }
       }
 
-      // Навешивание событий на кнопки
-      document.getElementById('btn-enter-id').addEventListener('click', enterGame);
+      const enterBtn = document.getElementById('btn-enter-id');
+      if (enterBtn) {
+        enterBtn.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          enterGame();
+        }, { passive: false });
+      }
+
       document.getElementById('btn-start-id').addEventListener('click', startGame);
 
       const bankModal = document.getElementById('bank-modal');
       const creditPlusModal = document.getElementById('credit-plus-modal');
       const creditMinusModal = document.getElementById('credit-minus-modal');
 
-      document.getElementById('btn-bank-id').addEventListener('click', () => {
-        bankModal.classList.add('active');
-      });
-
-      document.getElementById('btn-bank-back').addEventListener('click', () => {
-        bankModal.classList.remove('active');
-      });
+      document.getElementById('btn-bank-id').addEventListener('click', () => bankModal.classList.add('active'));
+      document.getElementById('btn-bank-back').addEventListener('click', () => bankModal.classList.remove('active'));
 
       document.getElementById('btn-get-credit').addEventListener('click', () => {
         bankModal.classList.remove('active');
@@ -726,4 +654,36 @@
         triggerConfetti();
       });
 
-      document.getEl
+      document.getElementById('btn-repay-credit').addEventListener('click', () => {
+        bankModal.classList.remove('active');
+        playerBalance -= 1000;
+        updateBalanceUI();
+        creditMinusModal.classList.add('active');
+        triggerConfetti();
+      });
+
+      document.getElementById('btn-credit-plus-ok').addEventListener('click', () => creditPlusModal.classList.remove('active'));
+      document.getElementById('btn-credit-minus-ok').addEventListener('click', () => creditMinusModal.classList.remove('active'));
+
+      const diceBtn = document.getElementById('btn-dice-id');
+      const diceImg = document.getElementById('dice-img-id');
+      let isRolling = false;
+
+      if (diceBtn && diceImg) {
+        diceBtn.addEventListener('click', () => {
+          if (isRolling) return; 
+          isRolling = true;
+          diceImg.classList.add('rolling');
+
+          setTimeout(() => {
+            diceImg.classList.remove('rolling');
+            const diceRoll = Math.floor(Math.random() * 11) + 2;
+            moveTokenSteps(diceRoll);
+            isRolling = false;
+          }, 2000);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
