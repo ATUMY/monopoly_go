@@ -6,6 +6,7 @@
   <title>Monopoly TG Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; }
@@ -38,17 +39,19 @@
       background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_roomfons.png');
     }
 
-    /* Блок приветствия (карточка + кнопка под ней) */
+    /* Блок приветствия */
     .hello-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 15px;
+      gap: 20px;
+      width: 100%;
     }
 
-    /* Небольшая карточка приветствия по центру */
+    /* Максимально увеличенная карточка приветствия */
     .hello-card {
-      width: 400px;
+      width: 90vw;
+      max-width: 400px;
       height: 320px;
       background: url('https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/icon_hello1.png') no-repeat center center;
       background-size: contain;
@@ -89,9 +92,10 @@
     }
 
     .btn-under-card {
-      width: 220px;
-      padding: 12px;
-      font-size: 16px;
+      width: 80vw;
+      max-width: 280px;
+      padding: 16px;
+      font-size: 18px;
     }
   </style>
 </head>
@@ -103,7 +107,7 @@
     <button class="btn-red" id="btn-enter-id">ВОЙТИ</button>
   </div>
 
-  <!-- 2. Игровая комната с карточкой и кнопкой ПОД НЕЙ -->
+  <!-- 2. Игровая комната с увеличенной карточкой и кнопкой ПОД НЕЙ -->
   <div id="room-screen" class="screen">
     <div id="hello-modal" class="hello-container">
       <div class="hello-card"></div>
@@ -157,6 +161,15 @@
       // Переход в комнату
       document.getElementById('auth-screen').classList.remove('active');
       document.getElementById('room-screen').classList.add('active');
+
+      // Запуск конфетти
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
     }
 
     function startGame() {
