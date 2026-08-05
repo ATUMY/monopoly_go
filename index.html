@@ -230,16 +230,41 @@
       transform: scale(0.7);
     }
 
+    /* Выпавшая карточка строго по центру */
     .tornado-inner.stopped .property-card.final-selected {
       opacity: 1 !important;
       transform: translate(-50%, -50%) scale(1.4) !important;
       top: 50% !important;
       left: 50% !important;
-      margin-top: -80px;
-      margin-left: -55px;
+      margin: 0 !important;
       z-index: 100;
       box-shadow: 0 15px 35px rgba(0,0,0,0.6);
       transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Зелёная кнопка КУПИТЬ под карточкой */
+    .buy-btn-card {
+      display: none;
+      position: absolute;
+      top: calc(50% + 140px);
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #2ecc71;
+      color: #ffffff;
+      border: none;
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      cursor: pointer;
+      z-index: 101;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    .buy-btn-card.active {
+      display: block;
     }
 
     /* Модальное окно Банка */
@@ -478,7 +503,7 @@
 
     <!-- Интерактивная карта maps.png -->
     <div id="board-container" class="game-board-container">
-      <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/map.png" alt="Game Board" class="game-board-img">
+      <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go/main/assets/maps.png" alt="Game Board" class="game-board-img">
     </div>
 
     <!-- 3D Торнадо карточек при броске кубика -->
@@ -486,6 +511,7 @@
       <div id="tornado-inner" class="tornado-inner">
         <!-- Сгенерируются динамически скриптом -->
       </div>
+      <button type="button" id="btn-buy-property" class="buy-btn-card">КУПИТЬ</button>
     </div>
 
     <div id="bank-modal" class="bank-modal">
@@ -533,237 +559,4 @@
     </div>
 
   </div>
-    <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-    }
-
-    const SUPABASE_URL = 'https://lfqkojfgkgrzvcrritpd.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcWtvamZna2dyenZjcnJpdHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MjYzNzYsImV4cCI6MjEwMTQwMjM3Nn0.VAgSdmfH-Gke95a_sNv7hvs2XhPNWAs9CRTBIuLVfFc'; 
-    
-    let supabaseClient = null;
-    if (window.supabase) {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-
-    let playerBalance = 1500;
-
-    // 8 цветовых групп Монополии
-    const propertyColors = [
-      { name: 'Коричневый', color: '#8B4513' },
-      { name: 'Голубой', color: '#87CEEB' },
-      { name: 'Розовый', color: '#FF69B4' },
-      { name: 'Оранжевый', color: '#FFA500' },
-      { name: 'Красный', color: '#E74C3C' },
-      { name: 'Жёлтый', color: '#F1C40F' },
-      { name: 'Зелёный', color: '#2ECC71' },
-      { name: 'Синий', color: '#2980B9' }
-    ];
-
-    function updateBalanceUI() {
-      const balanceEl = document.getElementById('balance-display');
-      if (balanceEl) balanceEl.textContent = playerBalance + ' €';
-    }
-
-    function triggerConfetti() {
-      if (typeof confetti === 'function') {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      }
-    }
-
-    function enterGame() {
-      const input = document.getElementById('username-input');
-      const name = input ? input.value.trim() : '';
-      if (!name) return;
-
-      localStorage.setItem('monopoly_user_name', name);
-      document.getElementById('header-user-name').textContent = name;
-
-      document.getElementById('auth-screen').classList.remove('active');
-      document.getElementById('room-screen').classList.add('active');
-
-      triggerConfetti();
-    }
-
-    function startGame() {
-      const modal = document.getElementById('hello-modal');
-      if (modal) modal.style.display = 'none';
-
-      document.getElementById('top-bar-el').classList.add('active-bar');
-      document.getElementById('bottom-bar-el').classList.add('active-bar');
-
-      const boardContainer = document.getElementById('board-container');
-      boardContainer.classList.add('active');
-    }
-
-    /* Вращение карты maps.png на ±15 градусов */
-    function initMapRotation() {
-      const container = document.getElementById('board-container');
-      let isDragging = false;
-      let startX = 0;
-      let currentAngle = 0;
-
-      const onStart = (clientX) => {
-        isDragging = true;
-        startX = clientX;
-        container.style.transition = 'none';
-      };
-
-      const onMove = (clientX) => {
-        if (!isDragging) return;
-        const deltaX = clientX - startX;
-        currentAngle = Math.max(-15, Math.min(15, deltaX * 0.1));
-        container.style.transform = `translate(-50%, -50%) rotate(${currentAngle}deg)`;
-      };
-
-      const onEnd = () => {
-        if (!isDragging) return;
-        isDragging = false;
-        container.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        container.style.transform = `translate(-50%, -50%) rotate(0deg)`;
-      };
-
-      container.addEventListener('mousedown', (e) => onStart(e.clientX));
-      window.addEventListener('mousemove', (e) => onMove(e.clientX));
-      window.addEventListener('mouseup', onEnd);
-
-      container.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 0) onStart(e.touches[0].clientX);
-      }, { passive: true });
-
-      window.addEventListener('touchmove', (e) => {
-        if (e.touches.length > 0) onMove(e.touches[0].clientX);
-      }, { passive: true });
-
-      window.addEventListener('touchend', onEnd);
-    }
-
-    /* Анимация торнадо карточек при броске кубика */
-    function playCardsTornado() {
-      const tornadoContainer = document.getElementById('cards-tornado');
-      const tornadoInner = document.getElementById('tornado-inner');
-      
-      tornadoInner.innerHTML = '';
-      tornadoInner.classList.remove('stopped');
-
-      let shuffled = [...propertyColors].sort(() => 0.5 - Math.random());
-      let selectedCards = shuffled.slice(0, 4);
-      let winningIndex = Math.floor(Math.random() * 4);
-
-      selectedCards.forEach((item, index) => {
-        const cardEl = document.createElement('div');
-        cardEl.className = `property-card card-pos-${index}`;
-        if (index === winningIndex) cardEl.classList.add('final-selected');
-
-        cardEl.innerHTML = `
-          <div class="property-card-header" style="background-color: ${item.color};"></div>
-          <div class="property-card-body">
-            <span class="property-title">${item.name}</span>
-            <span class="property-price">Аренда: 50€</span>
-          </div>
-        `;
-        tornadoInner.appendChild(cardEl);
-      });
-
-      tornadoContainer.classList.add('active');
-      tornadoInner.classList.add('spinning');
-
-      setTimeout(() => {
-        tornadoInner.classList.remove('spinning');
-        tornadoInner.classList.add('stopped');
-        triggerConfetti();
-
-        setTimeout(() => {
-          tornadoContainer.classList.remove('active');
-          tornadoInner.classList.remove('stopped');
-        }, 3500);
-
-      }, 2000);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const input = document.getElementById('username-input');
-      const enterBtn = document.getElementById('btn-enter-id');
-      const authForm = document.getElementById('auth-form');
-
-      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        const user = tg.initDataUnsafe.user;
-        if (input && user.first_name) {
-          input.value = user.first_name;
-        }
-      }
-
-      const doEnter = (e) => {
-        if (e) e.preventDefault();
-        enterGame();
-      };
-
-      if (enterBtn) {
-        enterBtn.addEventListener('pointerdown', doEnter);
-        enterBtn.addEventListener('click', doEnter);
-      }
-
-      if (authForm) {
-        authForm.addEventListener('submit', doEnter);
-      }
-
-      if (input) {
-        input.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') doEnter(e);
-        });
-      }
-
-      document.getElementById('btn-start-id').addEventListener('click', startGame);
-
-      const bankModal = document.getElementById('bank-modal');
-      const creditPlusModal = document.getElementById('credit-plus-modal');
-      const creditMinusModal = document.getElementById('credit-minus-modal');
-
-      document.getElementById('btn-bank-id').addEventListener('click', () => bankModal.classList.add('active'));
-      document.getElementById('btn-bank-back').addEventListener('click', () => bankModal.classList.remove('active'));
-
-      document.getElementById('btn-get-credit').addEventListener('click', () => {
-        bankModal.classList.remove('active');
-        playerBalance += 1000;
-        updateBalanceUI();
-        creditPlusModal.classList.add('active');
-        triggerConfetti();
-      });
-
-      document.getElementById('btn-repay-credit').addEventListener('click', () => {
-        bankModal.classList.remove('active');
-        playerBalance -= 1000;
-        updateBalanceUI();
-        creditMinusModal.classList.add('active');
-        triggerConfetti();
-      });
-
-      document.getElementById('btn-credit-plus-ok').addEventListener('click', () => creditPlusModal.classList.remove('active'));
-      document.getElementById('btn-credit-minus-ok').addEventListener('click', () => creditMinusModal.classList.remove('active'));
-
-      const diceBtn = document.getElementById('btn-dice-id');
-      const diceImg = document.getElementById('dice-img-id');
-      let isRolling = false;
-
-      if (diceBtn && diceImg) {
-        diceBtn.addEventListener('click', () => {
-          if (isRolling) return; 
-          isRolling = true;
-          diceImg.classList.add('rolling');
-
-          playCardsTornado();
-
-          setTimeout(() => {
-            diceImg.classList.remove('rolling');
-            isRolling = false;
-          }, 2000);
-        });
-      }
-
-      initMapRotation();
-    });
-  </script>
-</body>
-</html>
+  
