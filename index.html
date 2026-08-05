@@ -850,18 +850,7 @@
       boardContainer.classList.add('active');
     }
 
-    /* Вращение карты map.png на ±15 градусов */
-    function initMapRotation() {
-      const container = document.getElementById('board-container');
-      let isDragging = false;
-      let startX = 0;
-      let currentAngle = 0;
-
-      const onStart = (clientX) => {
-        isDragging = true;
-        startX = clientX;
-        container.style.transition = 'none';
-      };
+    
 
       const onMove = (clientX) => {
         if (!isDragging) return;
