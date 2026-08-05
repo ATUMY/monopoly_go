@@ -931,7 +931,7 @@
       if (actionBtns) actionBtns.classList.remove('active');
 
       // Бросаем кубик от 1 до 6 и двигаемся по кругу игрового поля
-      let diceRoll = Math.floor(Math.random() * 12) + 1;
+      let diceRoll = Math.floor(Math.random() * 6) + 1;
       currentBoardPosition = (currentBoardPosition + diceRoll) % boardTiles.length;
       let winningCard = boardTiles[currentBoardPosition];
       let winningIndex = 3; 
