@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Monopoly TG Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      user-select: none; 
+      -webkit-user-select: none; 
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input, button, textarea {
+      user-select: auto !important;
+      -webkit-user-select: auto !important;
+    }
+    
+    body, html { 
+      width: 100%; 
+      height: 100%; 
+      overflow: hidden; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    }
+    
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .active { display: flex !important; }
+
+    #auth-screen {
+      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_start1.png');
+      z-index: 50;
+    }
+
+    .auth-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #room-screen {
+      background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_roomfons1.png');
+      background-color: rgba(0, 0, 0, 0.4);
+      background-blend-mode: multiply;
+      position: relative;
+      overflow: hidden;
+      transition: filter 0.3s ease, background-color 0.3s ease;
+    }
+
+    #room-screen.jail-alarm {
+      animation: redFlash 0.6s infinite alternate ease-in-out;
+    }
+
+    @keyframes redFlash {
+      0% { box-shadow: inset 0 0 0px rgba(231, 76, 60, 0); }
+      100% { box-shadow: inset 0 0 120px rgba(231, 76, 60, 0.9); }
+    }
+
+    /* АНИМАЦИЯ ПЛЫВУЩИХ ОБЛАК */
+    .clouds-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .cloud {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 50px;
+      animation: floatCloud linear infinite;
+      filter: blur(3px);
+    }
+
+    .cloud::before, .cloud::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+    }
+
+    .cloud1 {
+      top: 12%;
+      width: 120px;
+      height: 35px;
+      animation-duration: 22s;
+    }
+    .cloud1::before { width: 50px; height: 50px; top: -20px; left: 15px; }
+    .cloud1::after { width: 40px; height: 40px; top: -12px; right: 15px; }
+
+    .cloud2 {
+      top: 28%;
+      width: 160px;
+      height: 45px;
+      animation-duration: 16s;
+      animation-delay: -7s;
+      opacity: 0.8;
+    }
+    .cloud2::before { width: 65px; height: 65px; top: -25px; left: 20px; }
+    .cloud2::after { width: 50px; height: 50px; top: -15px; right: 20px; }
+
+    .cloud3 {
+      top: 48%;
+      width: 100px;
+      height: 30px;
+      animation-duration: 28s;
+      animation-delay: -12s;
+      opacity: 0.5;
+    }
+    .cloud3::before { width: 40px; height: 40px; top: -15px; left: 10px; }
+    .cloud3::after { width: 35px; height: 35px; top: -10px; right: 10px; }
+
+    @keyframes floatCloud {
+      0% { transform: translateX(-200px); }
+      100% { transform: translateX(100vw); }
+    }
+
+    .sakura-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .petal {
+      position: absolute;
+      top: -10%;
+      border-radius: 15px 0 15px 0;
+      opacity: 0.8;
+      animation: fall linear infinite;
+    }
+
+    .petal.pink {
+      background: linear-gradient(135deg, #ffb7c5, #ff69b4);
+      box-shadow: 0 0 4px rgba(255, 105, 180, 0.4);
+    }
+
+    .petal.green {
+      background: linear-gradient(135deg, #a8e6cf, #2ecc71);
+      box-shadow: 0 0 4px rgba(46, 204, 113, 0.4);
+    }
+
+    @keyframes fall {
+      0% { top: -10%; transform: translateX(0) rotate(0deg); opacity: 0.9; }
+      100% { top: 105%; transform: translateX(120px) rotate(720deg); opacity: 0.2; }
+    }
+
+    .top-bar, .bottom-bar { display: none; }
+
+    .top-bar {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92vw;
+      max-width: 440px;
+      height: 54px;
+      background-color: #f1e9d6;
+      border-radius: 27px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      z-index: 10;
+    }
+
+    .top-bar.active-bar { display: flex; }
+
+    .bar-player { display: flex; align-items: center; gap: 8px; }
+    .player-icon { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+    .player-info { display: flex; flex-direction: column; justify-content: center; }
+    .player-name { font-size: 14px; font-weight: bold; color: #222222; line-height: 1.1; }
+
+    .online-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #27ae60;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .online-dot {
+      width: 7px;
+      height: 7px;
+      background-color: #2ecc71;
+      border-radius: 50%;
+      animation: blink 1.5s infinite ease-in-out;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.85); }
+    }
+
+    .bar-balance { display: flex; align-items: center; gap: 8px; }
+    .money-icon { width: 38px; height: 38px; object-fit: contain; }
+    .balance-text { font-size: 16px; font-weight: 800; color: #27ae60; }
+
+    .hello-card {
+      width: 95vw;
+      max-width: 440px;
+      height: 360px;
+      background: url('https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_hello1.png') no-repeat center center;
+      background-size: contain;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 20px 25px 20px;
+      z-index: 20;
+    }
+
+    /* КОЛЕСО ФОРТУНЫ */
+    .game-board-container {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 84vw;
+      height: 84vw;
+      max-width: 420px;
+      max-height: 420px;
+      min-width: 280px;
+      min-height: 280px;
+      aspect-ratio: 1 / 1;
+      z-index: 2;
+      transform: translate(-50%, -50%) scale(1);
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      touch-action: none;
+    }
+
+    .game-board-container.active { display: block; }
+    .game-board-container.zoomed { transform: translate(-50%, -50%) scale(1.25); }
+
+    .fortune-wheel-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: #f1e9d6; 
+      border: 18px solid #111111;
+      padding: 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+
+    /* Эффект переливания/блика на самом колесе */
+    .wheel-glare-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+      overflow: hidden;
+    }
+
+    .wheel-glare-layer::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0.05) 60%, rgba(255,255,255,0) 100%);
+      transform: rotate(25deg);
+      animation: wheelGlareAnim 3.5s infinite ease-in-out;
+    }
+
+    @keyframes wheelGlareAnim {
+      0% { transform: translateY(-100%) rotate(25deg); }
+      100% { transform: translateY(100%) rotate(25deg); }
+    }
+
+    /* Статичная центральная иконка */
+    .wheel-center-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70%;
+      height: 70%;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 7;
+    }
+
+    /* Лампочки по кругу поверх черной обводки */
+    .wheel-bulbs {
+      position: absolute;
+      top: -18px; 
+      left: -18px;
+      width: calc(100% + 36px);
+      height: calc(100% + 36px);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    .bulb {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      box-shadow: 0 0 6px #fff, 0 0 10px #ffffff;
+      transform: translate(-50%, -50%);
+      animation: bulbBlink 1s infinite alternate;
+    }
+
+    @keyframes bulbBlink {
+      0% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.8); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    .fortune-wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: transparent;
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+      transform: rotate(0deg);
+      overflow: hidden;
+      display: block;
+    }
+
+    /* КРАСНЫЙ УКАЗАТЕЛЬ В ВИДЕ КАПЕЛЬКИ СВЕРХУ */
+    .wheel-pointer-container {
+      position: absolute;
+      top: -28px; 
+      left: 50%;
+      transform: translateX(-50%);
+      width: 28px;
+      height: 40px;
+      z-index: 15; 
+      pointer-events: none;
+    }
+
+    .wheel-pointer-droplet {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #ff4d4d, #cc0000);
+      border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
+      position: relative;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+      transform-origin: 50% 10%; 
+      transform: rotate(0deg);
+    }
+
+    .wheel-pointer-droplet::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .wheel-pointer-droplet.ticking {
+      animation: pointerTick 0.1s ease-out;
+    }
+
+    @keyframes pointerTick {
+      0% { transform: rotate(0deg); }
+      30% { transform: rotate(15deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .cards-tornado-container {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 80;
+      perspective: 1000px;
+      pointer-events: auto;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cards-tornado-container.active { display: flex; }
+
+    .tornado-inner {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      transform-style: preserve-3d;
+    }
+
+    .tornado-inner.spinning { animation: tornadoSpin 0.4s linear infinite; }
+
+    @keyframes tornadoSpin {
+      0% { transform: rotateY(0deg); filter: blur(4px); }
+      100% { transform: rotateY(360deg); filter: blur(4px); }
+    }
+
+    .property-card {
+      position: absolute;
+      width: 120px;
+      height: 175px;
+      background-color: #fffdfa;
+      border: 2px solid #222222;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.5s ease-in-out;
+    }
+
+    .property-card-header {
+      width: 100%;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border-bottom: 2px solid #222222;
+      text-align: center;
+    }
+
+    .property-title {
+      font-size: 8px;
+      font-weight: 900;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+
+    .property-card-body {
+      flex: 1;
+      width: 100%;
+      padding: 8px 8px 6px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .rent-table { width: 100%; display: flex; flex-direction: column; gap: 3px; }
+    .rent-row { display: flex; justify-content: space-between; align-items: center; font-size: 6.5px; font-weight: 700; color: #222222; line-height: 1; }
+    .rent-label { text-align: left; white-space: nowrap; }
+    .rent-value { text-align: right; font-weight: 800; }
+
+    .price-badge-container { width: 100%; display: flex; justify-content: center; margin-top: 4px; margin-bottom: 2px; }
+    .price-badge { background-color: #e74c3c; color: #ffffff; font-size: 8px; font-weight: 900; padding: 2px 10px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); text-align: center; line-height: 1; }
+
+    .chance-card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 8px;
+      height: 100%;
+      text-align: center;
+    }
+
+    .chance-title {
+      font-size: 11px;
+      font-weight: 900;
+      color: #c0392b;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .chance-symbol {
+      font-size: 42px;
+      line-height: 1;
+      margin: 8px 0;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    .chance-img {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      margin: 8px 0;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    .chance-desc {
+      font-size: 9px;
+      font-weight: 800;
+      color: #111111;
+      line-height: 1.2;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 6;
+      -webkit-box-orient: vertical;
+    }
+
+    .glass-glare { position: relative; overflow: hidden; }
+    .glass-glare::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.08) 60%, rgba(255,255,255,0) 100%);
+      transform: rotate(25deg);
+      animation: glareAnimation 3s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes glareAnimation {
+      0% { transform: translateY(-100%) rotate(25deg); }
+      100% { transform: translateY(100%) rotate(25deg); }
+    }
+
+    .card-pos-0 { top: 0px; left: 90px; transform: scale(0.85); opacity: 0.7; }
+    .card-pos-1 { top: 70px; left: 5px; transform: scale(0.85) rotate(-10deg); opacity: 0.7; }
+    .card-pos-2 { top: 70px; right: 5px; transform: scale(0.85) rotate(10deg); opacity: 0.7; }
+    .card-pos-3 { top: 90px; left: 90px; transform: scale(1); z-index: 5; box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+
+    .tornado-inner.stopped .property-card { filter: blur(0px) !important; opacity: 0.2; transform: scale(0.7); }
+
+    .tornado-inner.stopped .property-card.final-selected {
+      opacity: 1 !important;
+      transform: translate(-50%, -50%) scale(1.4) !important;
+      top: 50% !important;
+      left: 50% !important;
+      margin: 0 !important;
+      z-index: 100;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.5), 0 0 24px rgba(255, 215, 0, 0.3), 0 10px 25px rgba(0,0,0,0.5);
+      animation: cardGlowSoft 2s infinite alternate ease-in-out;
+      transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes cardGlowSoft {
+      0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.2), 0 10px 25px rgba(0,0,0,0.5); }
+      100% { box-shadow: 0 0 18px rgba(255, 215, 0, 0.7), 0 0 32px rgba(255, 215, 0, 0.4), 0 10px 25px rgba(0,0,0,0.5); }
+    }
+
+    .property-card.fly-to-active { animation: flyToActiveAnim 0.8s cubic-bezier(0.5, 0, 0.75, 0) forwards !important; }
+
+    @keyframes flyToActiveAnim {
+      0% { top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+      100% { top: calc(100vh - 40px); left: calc(50% + 120px); transform: translate(-50%, -50%) scale(0.05); opacity: 0; }
+    }
+
+    .card-action-btns {
+      display: none;
+      position: absolute;
+      top: calc(50% + 155px);
+      left: 50%;
+      transform: translateX(-50%);
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 101;
+      pointer-events: auto;
+    }
+
+    .card-action-btns.active { display: flex; }
+
+    .buy-btn-card, .cancel-btn-card, .ok-btn-card, .free-btn-card {
+      width: 160px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #ffffff;
+      border: none;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      cursor: pointer;
+      touch-action: manipulation;
+      line-height: 1;
+    }
+
+    .buy-btn-card { background-color: #2ecc71; }
+    .cancel-btn-card { background-color: #e74c3c; }
+    .ok-btn-card { background-color: #e74c3c; }
+    .free-btn-card { background-color: #27ae60; }
+
+    .bank-modal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .bank-modal.active { display: flex; }
+
+    .bank-content {
+      width: 90vw;
+      max-width: 400px;
+      height: 380px;
+      background-color: #f1e9d6;
+      border-radius: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 25px 20px;
+      align-items: center;
+    }
+
+    .bank-columns { width: 100%; display: flex; justify-content: space-around; align-items: center; margin: auto 0; }
+    .bank-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; flex: 1; }
+    .bank-action-icon { width: 75px; height: 75px; object-fit: contain; }
+
+    .btn-bank-get, .btn-bank-repay, .btn-bank-back { border: none; font-weight: bold; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); touch-action: manipulation; }
+    .btn-bank-get { background-color: #27ae60; color: #ffffff; padding: 10px 18px; font-size: 14px; }
+    .btn-bank-repay { background-color: #e74c3c; color: #ffffff; padding: 10px 18px; font-size: 14px; }
+    .btn-bank-back { background-color: #e74c3c; color: #ffffff; width: 80%; padding: 12px; font-size: 16px; border-radius: 12px; }
+
+    .active-modal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 120;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .active-modal.active { display: flex; }
+
+    .active-content {
+      width: 90vw;
+      max-width: 420px;
+      height: 480px;
+      background-color: #f1e9d6;
+      border-radius: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      align-items: center;
+    }
+
+    .active-title { font-size: 18px; font-weight: 800; color: #222222; margin-bottom: 10px; }
+    .active-cards-list { width: 100%; flex: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-content: flex-start; padding: 10px 5px; }
+
+    .inventory-card {
+      width: 110px;
+      height: 160px;
+      background-color: #fffdfa;
+      border: 1.5px solid #222222;
+      border-radius: 6px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .btn-active-back { background-color: #e74c3c; color: #ffffff; width: 80%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); margin-top: 10px; touch-action: manipulation; }
+
+    .dynamic-card {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 150;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .dynamic-card.active { display: flex; }
+
+    .dynamic-card-box {
+      width: 95vw;
+      max-width: 440px;
+      height: 360px;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: contain;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 20px 25px 20px;
+    }
+
+    #credit-plus-modal .dynamic-card-box { background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/credit_plus.png'); }
+    #credit-minus-modal .dynamic-card-box { background-image: url('https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/credit_minus.png'); }
+
+    .input-field {
+      width: 80%;
+      max-width: 300px;
+      padding: 14px 18px;
+      font-size: 18px;
+      border: 2px solid #ffffff;
+      border-radius: 12px;
+      outline: none;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      margin-bottom: 15px;
+    }
+
+    .input-field.error {
+      border: 2px solid #e74c3c;
+      animation: shake 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    .btn-red {
+      width: 80%;
+      max-width: 300px;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #e74c3c;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      touch-action: manipulation;
+    }
+
+    .btn-inside-card { width: 85%; max-width: 260px; padding: 12px; font-size: 17px; }
+
+    .bottom-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92vw;
+      max-width: 440px;
+      height: 64px;
+      background-color: #f1e9d6;
+      border-radius: 32px;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      z-index: 10;
+    }
+
+    .bottom-bar.active-bar { display: flex; }
+
+    .bar-btn {
+      background: none;
+      border: none;
+      outline: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      gap: 3px;
+      padding: 4px 8px;
+      touch-action: manipulation;
+    }
+
+    .bar-btn-icon { width: 32px; height: 32px; object-fit: contain; }
+    .bar-btn-text { font-size: 11px; font-weight: 800; color: #222222; }
+
+    .dice-btn {
+      position: relative;
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -30px;
+      touch-action: manipulation;
+    }
+
+    .dice-icon { width: 82px; height: 82px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); }
+    .dice-icon.rolling { animation: rollAnimation 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+    @keyframes rollAnimation {
+      0% { transform: scale(0.7) rotate(0deg); filter: blur(4px); }
+      100% { transform: scale(0.7) rotate(1440deg); filter: blur(4px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Экран входа -->
+  <div id="auth-screen" class="screen active">
+    <form id="auth-form" class="auth-form">
+      <input type="text" id="username-input" class="input-field" placeholder="Введите имя..." maxlength="15" required autocomplete="off">
+      <button type="submit" class="btn-red" id="btn-enter-id">ВОЙТИ</button>
+    </form>
+  </div>
+
+  <!-- 2. Игровая комната -->
+  <div id="room-screen" class="screen">
+    
+    <!-- Плывущие облака -->
+    <div class="clouds-container">
+      <div class="cloud cloud1"></div>
+      <div class="cloud cloud2"></div>
+      <div class="cloud cloud3"></div>
+    </div>
+
+    <div id="sakura-container" class="sakura-container"></div>
+
+    <div class="top-bar" id="top-bar-el">
+      <div class="bar-player">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_player.png" alt="Player" class="player-icon" id="header-user-avatar">
+        <div class="player-info">
+          <span id="header-user-name" class="player-name">Игрок</span>
+          <div class="online-status">
+            <span class="online-dot"></span>
+            <span>online</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bar-balance">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_money.png" alt="Money" class="money-icon">
+        <span class="balance-text" id="balance-display">1500 $</span>
+      </div>
+    </div>
+
+    <div id="hello-modal" class="hello-card">
+      <button type="button" class="btn-red btn-inside-card" id="btn-start-id">НАЧАТЬ ИГРУ</button>
+    </div>
+
+    <!-- Интерактивное Колесо Фортуны -->
+    <div id="board-container" class="game-board-container">
+      <div class="fortune-wheel-wrapper">
+        <!-- Контейнер для лампочек -->
+        <div class="wheel-bulbs" id="wheel-bulbs"></div>
+        
+        <!-- Красный указатель-капелька СВЕРХУ -->
+        <div class="wheel-pointer-container">
+          <div class="wheel-pointer-droplet" id="wheel-pointer-el"></div>
+        </div>
+        
+        <!-- Вращающееся колесо -->
+        <svg class="fortune-wheel" id="fortune-wheel-svg" viewBox="0 0 500 500"></svg>
+        
+        <!-- Слой блика/переливания -->
+        <div class="wheel-glare-layer"></div>
+
+        <!-- Статичный центр колеса -->
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_maps2.png?raw=true" alt="Center Icon" class="wheel-center-icon">
+      </div>
+    </div>
+
+    <!-- 3D Торнадо карточек при броске кубика -->
+    <div id="cards-tornado" class="cards-tornado-container">
+      <div id="tornado-inner" class="tornado-inner"></div>
+      
+      <div id="card-action-btns" class="card-action-btns">
+        <button type="button" id="btn-buy-property" class="buy-btn-card">КУПИТЬ</button>
+        <button type="button" id="btn-cancel-property" class="cancel-btn-card">ОТКАЗАТЬСЯ</button>
+        <button type="button" id="btn-ok-property" class="ok-btn-card" style="display: none;">ПОНЯТНО</button>
+        <button type="button" id="btn-free-jail" class="free-btn-card" style="display: none;">ОСВОБОДИТЬСЯ</button>
+      </div>
+    </div>
+
+    <!-- Модальное окно БАНК -->
+    <div id="bank-modal" class="bank-modal">
+      <div class="bank-content">
+        <div class="bank-columns">
+          <div class="bank-item">
+            <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/bank_plus.png" alt="Bank Plus" class="bank-action-icon">
+            <button type="button" class="btn-bank-get" id="btn-get-credit">ПОЛУЧИТЬ</button>
+          </div>
+          <div class="bank-item">
+            <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/bank_minus.png" alt="Bank Minus" class="bank-action-icon">
+            <button type="button" class="btn-bank-repay" id="btn-repay-credit">ПОГАСИТЬ</button>
+          </div>
+        </div>
+        <button type="button" class="btn-bank-back" id="btn-bank-back">НАЗАД</button>
+      </div>
+    </div>
+
+    <!-- Модальное окно ACTIVE (Инвентарь) -->
+    <div id="active-modal" class="active-modal">
+      <div class="active-content">
+        <div class="active-title">МОИ АКТИВЫ</div>
+        <div id="active-cards-list" class="active-cards-list"></div>
+        <button type="button" class="btn-active-back" id="btn-active-back">НАЗАД</button>
+      </div>
+    </div>
+
+    <div id="credit-plus-modal" class="dynamic-card">
+      <div class="dynamic-card-box">
+        <button type="button" class="btn-red btn-inside-card" id="btn-credit-plus-ok">ПОНЯТНО!</button>
+      </div>
+    </div>
+
+    <div id="credit-minus-modal" class="dynamic-card">
+      <div class="dynamic-card-box">
+        <button type="button" class="btn-red btn-inside-card" id="btn-credit-minus-ok">ПОНЯТНО!</button>
+      </div>
+    </div>
+
+    <div class="bottom-bar" id="bottom-bar-el">
+      <button type="button" class="bar-btn" id="btn-bank-id">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_bank.png" alt="Bank" class="bar-btn-icon">
+        <span class="bar-btn-text">BANK</span>
+      </button>
+
+      <button type="button" class="dice-btn" id="btn-dice-id">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_cub.png" alt="Dice" class="dice-icon" id="dice-img-id">
+      </button>
+
+      <button type="button" class="bar-btn" id="btn-active-id">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_active.png" alt="Active" class="bar-btn-icon">
+        <span class="bar-btn-text">ACTIVE</span>
+      </button>
+    </div>
+
+  </div>
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const SUPABASE_URL = 'https://lfqkojfgkgrzvcrritpd.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcWtvamZna2dyenZjcnJpdHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MjYzNzYsImV4cCI6MjEwMTQwMjM3Nn0.VAgSdmfH-Gke95a_sNv7hvs2XhPNWAs9CRTBIuLVfFc'; 
+    
+    let supabaseClient = null;
+    if (window.supabase) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    let playerBalance = 1500;
+    let inventory = [];
+    let hasGetOutOfJailCard = false;
+    
+    let diceRollCount = 0;
+    let currentWheelRotation = 0;
+
+    const boardTiles = [
+      { type: 'start', data: { title: "СТАРТ", text: "Вы прошли полный круг! Получите +200 $", change: 200, img: "https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_money.png", sectorColor: "#e74c3c" } },
+      { type: 'property', data: { title: "ДЕТРОЙТ", color: "#8B4513", price: 60, housePrice: 50, rent: 2, r1: 10, r2: 30, r3: 90, r4: 160, hotel: 250, sectorColor: "#8B4513" } },
+      { type: 'chance', data: { title: "КАЗНА", text: "Лотерея: Выигрыш +100 $.", change: 100, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "КЛИВЛЕНД", color: "#8B4513", price: 60, housePrice: 50, rent: 4, r1: 20, r2: 60, r3: 180, r4: 320, hotel: 450, sectorColor: "#8B4513" } },
+      { type: 'property', data: { title: "ВОКЗАЛ 'СЕВЕРНЫЙ'", color: "#222222", price: 200, isStation: true, rent: 25, r2: 50, sectorColor: "#222222" } },
+      { type: 'property', data: { title: "МЕМФИС", color: "#87CEEB", price: 100, housePrice: 50, rent: 6, r1: 30, r2: 90, r3: 270, r4: 400, hotel: 550, sectorColor: "#87CEEB" } },
+      { type: 'chance', data: { title: "ШАНС", text: "Инвестиции: Дивиденды +150 $.", change: 150, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "НЭШВИЛЛ", color: "#87CEEB", price: 100, housePrice: 50, rent: 6, r1: 30, r2: 90, r3: 270, r4: 400, hotel: 550, sectorColor: "#87CEEB" } },
+      { type: 'property', data: { title: "АТЛАНТА", color: "#87CEEB", price: 120, housePrice: 50, rent: 8, r1: 40, r2: 100, r3: 300, r4: 450, hotel: 600, sectorColor: "#87CEEB" } },
+      { type: 'chance', data: { text: "ВЫ ОТПРАВЛЯЕТЕСЬ В ТЮРЬМУ!", title: "ТЮРЬМА", symbol: "⛓️", isJail: true, change: 0, sectorColor: "#111111" } },
+      { type: 'property', data: { title: "ФЕНИКС", color: "#FF69B4", price: 140, housePrice: 100, rent: 10, r1: 50, r2: 150, r3: 450, r4: 625, hotel: 750, sectorColor: "#FF69B4" } },
+      { type: 'property', data: { title: "ДЕНВЕР", color: "#FF69B4", price: 140, housePrice: 100, rent: 10, r1: 50, r2: 150, r3: 450, r4: 625, hotel: 750, sectorColor: "#FF69B4" } },
+      { type: 'property', data: { title: "ДАЛЛАС", color: "#FF69B4", price: 160, housePrice: 100, rent: 12, r1: 60, r2: 180, r3: 500, r4: 700, hotel: 900, sectorColor: "#FF69B4" } },
+      { type: 'property', data: { title: "ПОРТ 'ЗАПАДНЫЙ'", color: "#222222", price: 200, isStation: true, rent: 25, r2: 50, sectorColor: "#222222" } },
+      { type: 'property', data: { title: "ХЬЮСТОН", color: "#FFA500", price: 180, housePrice: 100, rent: 14, r1: 70, r2: 200, r3: 550, r4: 750, hotel: 950, sectorColor: "#FFA500" } },
+      { type: 'chance', data: { title: "КАЗНА", text: "Банковский выбор: Выплата +50 $.", change: 50, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "СИЭТЛ", color: "#FFA500", price: 180, housePrice: 100, rent: 14, r1: 70, r2: 200, r3: 550, r4: 750, hotel: 950, sectorColor: "#FFA500" } },
+      { type: 'property', data: { title: "ФИЛАДЕЛЬФИЯ", color: "#FFA500", price: 200, housePrice: 100, rent: 16, r1: 80, r2: 220, r3: 600, r4: 800, hotel: 1000, sectorColor: "#FFA500" } },
+      { type: 'chance', data: { text: "БЕСПЛАТНАЯ ПАРКОВКА", title: "БЕСПЛАТНАЯ ПАРКОВКА", symbol: "🚗", isSpecial: true, change: 0, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "МАЙАМИ", color: "#E74C3C", price: 220, housePrice: 150, rent: 18, r1: 90, r2: 250, r3: 700, r4: 875, hotel: 1050, sectorColor: "#E74C3C" } },
+      { type: 'chance', data: { text: "Бесплатный выход из Тюрьмы: Карточка в инвентарь.", title: "БЕСПЛАТНЫЙ ВЫХОД", symbol: "📜", isGetOutJail: true, change: 0, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "ЛАС-ВЕГАС", color: "#E74C3C", price: 220, housePrice: 150, rent: 18, r1: 90, r2: 250, r3: 700, r4: 875, hotel: 1050, sectorColor: "#E74C3C" } },
+      { type: 'property', data: { title: "ЧИКАГО", color: "#E74C3C", price: 240, housePrice: 150, rent: 20, r1: 100, r2: 300, r3: 750, r4: 925, hotel: 1100, sectorColor: "#E74C3C" } },
+      { type: 'property', data: { title: "ВОКЗАЛ 'ЮЖНЫЙ'", color: "#222222", price: 200, isStation: true, rent: 25, r2: 50, sectorColor: "#222222" } },
+      { type: 'property', data: { title: "САН-ДИЕГО", color: "#F1C40F", price: 260, housePrice: 150, rent: 22, r1: 110, r2: 330, r3: 800, r4: 975, hotel: 1150, sectorColor: "#F1C40F" } },
+      { type: 'property', data: { title: "САН-ФРАНЦИСКО", color: "#F1C40F", price: 260, housePrice: 150, rent: 22, r1: 110, r2: 330, r3: 800, r4: 975, hotel: 1150, sectorColor: "#F1C40F" } },
+      { type: 'property', data: { title: "БОСТОН", color: "#F1C40F", price: 280, housePrice: 150, rent: 24, r1: 120, r2: 360, r3: 850, r4: 1025, hotel: 1200, sectorColor: "#F1C40F" } },
+      { type: 'chance', data: { text: "Арест: Прямой переход в Тюрьму.", title: "ТЮРЬМА", symbol: "⛓️", isJail: true, change: 0, sectorColor: "#111111" } },
+      { type: 'property', data: { title: "ВАШИНГТОН", color: "#2ECC71", price: 300, housePrice: 200, rent: 26, r1: 130, r2: 390, r3: 900, r4: 1100, hotel: 1275, sectorColor: "#2ECC71" } },
+      { type: 'property', data: { title: "ЛОС-АНДЖЕЛЕС", color: "#2ECC71", price: 300, housePrice: 200, rent: 26, r1: 130, r2: 390, r3: 900, r4: 1100, hotel: 1275, sectorColor: "#2ECC71" } },
+      { type: 'chance', data: { title: "ШАНС", text: "Превышение скорости: Штраф -15 $.", change: -15, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "БЕВЕРЛИ-ХИЛЛЗ", color: "#2ECC71", price: 320, housePrice: 200, rent: 28, r1: 150, r2: 450, r3: 1000, r4: 1200, hotel: 1400, sectorColor: "#2ECC71" } },
+      { type: 'property', data: { title: "ПОРТ 'ВОСТОЧНЫЙ'", color: "#222222", price: 200, isStation: true, rent: 25, r2: 50, sectorColor: "#222222" } },
+      { type: 'chance', data: { title: "ШАНС", text: "Капитальный ремонт: Заплатить -25 $ за дом, -100 $ за отель.", change: -50, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "МАНХЭТТЕН", color: "#2980B9", price: 350, housePrice: 200, rent: 35, r1: 175, r2: 500, r3: 1100, r4: 1300, hotel: 1500, sectorColor: "#2980B9" } },
+      { type: 'chance', data: { title: "КАЗНА", text: "Оплата обучения: Штраф -150 $.", change: -150, sectorColor: "#ffffff" } },
+      { type: 'property', data: { title: "НЬЮ-ЙОРК", color: "#2980B9", price: 400, housePrice: 200, rent: 50, r1: 200, r2: 600, r3: 1400, r4: 1700, hotel: 2000, sectorColor: "#2980B9" } }
+    ];
+
+    let isWheelSpinning = false;
+    let lastTickedSector = -1;
+    let fortuneWheelSvgEl = null;
+    let wheelPointerEl = null;
+
+    function renderFortuneWheel() {
+      const svg = document.getElementById('fortune-wheel-svg');
+      const bulbsContainer = document.getElementById('wheel-bulbs');
+      if (!svg) return;
+      
+      fortuneWheelSvgEl = svg;
+      wheelPointerEl = document.getElementById('wheel-pointer-el');
+
+      const numSectors = boardTiles.length;
+      const anglePerSector = 360 / numSectors;
+      const cx = 250, cy = 250;
+      
+      const cardRadiusOuter = 245; 
+      const cardRadiusInner = 215; 
+      const cardWidthAngle = anglePerSector * 0.7;
+
+      let svgHTML = '';
+
+      boardTiles.forEach((_, i) => {
+        const angle = i * anglePerSector;
+        const rad = Math.PI * angle / 180;
+        const lx = cx + cardRadiusOuter * Math.sin(rad);
+        const ly = cy - cardRadiusOuter * Math.cos(rad);
+        svgHTML += `<line x1="${cx}" y1="${cy}" x2="${lx}" y2="${ly}" stroke="rgba(255,255,255,0.15)" stroke-width="1" />`;
+      });
+
+      boardTiles.forEach((tile, i) => {
+        const centerAngle = i * anglePerSector + (anglePerSector / 2);
+        const startAngle = centerAngle - (cardWidthAngle / 2);
+        const endAngle = centerAngle + (cardWidthAngle / 2);
+
+        const x1 = cx + cardRadiusOuter * Math.sin(Math.PI * startAngle / 180);
+        const y1 = cy - cardRadiusOuter * Math.cos(Math.PI * startAngle / 180);
+        const x2 = cx + cardRadiusOuter * Math.sin(Math.PI * endAngle / 180);
+        const y2 = cy - cardRadiusOuter * Math.cos(Math.PI * endAngle / 180);
+
+        const x3 = cx + cardRadiusInner * Math.sin(Math.PI * endAngle / 180);
+        const y3 = cy - cardRadiusInner * Math.cos(Math.PI * endAngle / 180);
+        const x4 = cx + cardRadiusInner * Math.sin(Math.PI * startAngle / 180);
+        const y4 = cy - cardRadiusInner * Math.cos(Math.PI * startAngle / 180);
+
+        const fill = tile.data.sectorColor || '#ffffff';
+        const d = `M ${x1} ${y1} A ${cardRadiusOuter} ${cardRadiusOuter} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${cardRadiusInner} ${cardRadiusInner} 0 0 0 ${x4} ${y4} Z`;
+
+        svgHTML += `<path d="${d}" fill="${fill}" stroke="#222222" stroke-width="1" rx="2" ry="2" />`;
+      });
+
+      svg.innerHTML = svgHTML;
+
+      if (bulbsContainer) {
+        bulbsContainer.innerHTML = '';
+        const bulbCount = 40;
+        for (let i = 0; i < bulbCount; i++) {
+          const bulb = document.createElement('div');
+          bulb.className = 'bulb';
+          const angle = (i * 360 / bulbCount) * (Math.PI / 180);
+          const left = 50 + 51.5 * Math.sin(angle);
+          const top = 50 - 51.5 * Math.cos(angle);
+          bulb.style.left = `${left}%`;
+          bulb.style.top = `${top}%`;
+          bulb.style.animationDelay = `${(i % 5) * 0.2}s`;
+          bulbsContainer.appendChild(bulb);
+        }
+      }
+    }
+
+    function trackWheelPointer() {
+      if (!isWheelSpinning || !fortuneWheelSvgEl || !wheelPointerEl) return;
+
+      const st = window.getComputedStyle(fortuneWheelSvgEl, null);
+      const tr = st.getPropertyValue("-webkit-transform") ||
+               st.getPropertyValue("-moz-transform") ||
+               st.getPropertyValue("-ms-transform") ||
+               st.getPropertyValue("-o-transform") ||
+               st.getPropertyValue("transform");
+
+      let angle = 0;
+      if (tr && tr !== "none") {
+        const values = tr.split('(')[1].split(')')[0].split(',');
+        const a = values[0];
+        const b = values[1];
+        angle = Math.round(Math.atan2(b, a) * (180/Math.PI));
+        if (angle < 0) angle += 360;
+      } else {
+        angle = currentWheelRotation % 360;
+      }
+      
+      const invertedAngle = (360 - angle) % 360;
+      const numSectors = boardTiles.length;
+      const anglePerSector = 360 / numSectors;
+      const currentSector = Math.floor(invertedAngle / anglePerSector);
+
+      if (currentSector !== lastTickedSector) {
+        lastTickedSector = currentSector;
+        wheelPointerEl.classList.remove('ticking');
+        void wheelPointerEl.offsetWidth;
+        wheelPointerEl.classList.add('ticking');
+      }
+
+      requestAnimationFrame(trackWheelPointer);
+    }
+
+    function initSakuraPetals() {
+      const container = document.getElementById('sakura-container');
+      if (!container) return;
+      
+      const count = 18;
+      for (let i = 0; i < count; i++) {
+        const petal = document.createElement('div');
+        const isPink = Math.random() > 0.35;
+        petal.className = `petal ${isPink ? 'pink' : 'green'}`;
+        
+        const size = Math.random() * 8 + 6;
+        petal.style.width = `${size}px`;
+        petal.style.height = `${size * 1.3}px`;
+        petal.style.left = `${Math.random() * 100}%`;
+        
+        const duration = Math.random() * 5 + 4;
+        const delay = Math.random() * 5;
+        petal.style.animationDuration = `${duration}s`;
+        petal.style.animationDelay = `${delay}s`;
+        
+        container.appendChild(petal);
+      }
+    }
+
+    function updateBalanceUI() {
+      const balanceEl = document.getElementById('balance-display');
+      if (balanceEl) balanceEl.textContent = playerBalance + ' $';
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
+    }
+
+    function enterGame() {
+      const input = document.getElementById('username-input');
+      const name = input ? input.value.trim() : '';
+
+      if (!name) {
+        if (input) {
+          input.classList.add('error');
+          setTimeout(() => input.classList.remove('error'), 400);
+        }
+        return;
+      }
+
+      localStorage.setItem('monopoly_user_name', name);
+      document.getElementById('header-user-name').textContent = name;
+
+      document.getElementById('auth-screen').classList.remove('active');
+      document.getElementById('room-screen').classList.add('active');
+
+      triggerConfetti();
+    }
+
+    function startGame() {
+      const modal = document.getElementById('hello-modal');
+      if (modal) modal.style.display = 'none';
+
+      document.getElementById('top-bar-el').classList.add('active-bar');
+      document.getElementById('bottom-bar-el').classList.add('active-bar');
+
+      const boardContainer = document.getElementById('board-container');
+      boardContainer.classList.add('active');
+    }
+
+    function getRandomCardItem() {
+      return boardTiles[Math.floor(Math.random() * boardTiles.length)];
+    }
+
+    function renderPropertyCardHTML(item) {
+      if (item.isStation) {
+        return `
+          <div class="property-card-header" style="background-color: ${item.color};">
+            <span class="property-title">${item.title}</span>
+          </div>
+          <div class="property-card-body">
+            <div class="rent-table" style="margin-top: 15px;">
+              <div class="rent-row"><span class="rent-label">Аренда</span><span class="rent-value">$${item.rent}</span></div>
+              <div class="rent-row" style="margin-top: 10px;"><span class="rent-label">За 2 объекта</span><span class="rent-value">$${item.r2}</span></div>
+              <div class="rent-row" style="margin-top: 15px;"><span class="rent-label">Залоговая стоимость</span><span class="rent-value">$${item.price / 2}</span></div>
+            </div>
+            <div class="price-badge-container">
+              <div class="price-badge">$${item.price}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="property-card-header" style="background-color: ${item.color};">
+          <span class="property-title">${item.title}</span>
+        </div>
+        <div class="property-card-body">
+          <div class="rent-table">
+            <div class="rent-row"><span class="rent-label">Аренда</span><span class="rent-value">$${item.rent}</span></div>
+            <div class="rent-row"><span class="rent-label">С 1 домом</span><span class="rent-value">$${item.r1}</span></div>
+            <div class="rent-row"><span class="rent-label">С 2 домами</span><span class="rent-value">$${item.r2}</span></div>
+            <div class="rent-row"><span class="rent-label">С 3 домами</span><span class="rent-value">$${item.r3}</span></div>
+            <div class="rent-row"><span class="rent-label">С 4 домами</span><span class="rent-value">$${item.r4}</span></div>
+            <div class="rent-row"><span class="rent-label">С одним отелем</span><span class="rent-value">$${item.hotel}</span></div>
+            <div class="rent-row"><span class="rent-label">Залоговая стоимость</span><span class="rent-value">$${item.price / 2}</span></div>
+            <div class="rent-row"><span class="rent-label">Цена постройки</span><span class="rent-value">$${item.housePrice}</span></div>
+          </div>
+          <div class="price-badge-container">
+            <div class="price-badge">$${item.price}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function playCardsTornado() {
+      diceRollCount++;
+
+      const tornadoContainer = document.getElementById('cards-tornado');
+      const tornadoInner = document.getElementById('tornado-inner');
+      const actionBtns = document.getElementById('card-action-btns');
+      const buyBtn = document.getElementById('btn-buy-property');
+      const cancelBtn = document.getElementById('btn-cancel-property');
+      const okBtn = document.getElementById('btn-ok-property');
+      const freeBtn = document.getElementById('btn-free-jail');
+      const boardContainer = document.getElementById('board-container');
+      const fortuneWheel = document.getElementById('fortune-wheel-svg');
+      
+      if (boardContainer) boardContainer.classList.add('zoomed');
+
+      tornadoInner.innerHTML = '';
+      tornadoInner.classList.remove('stopped');
+      if (actionBtns) actionBtns.classList.remove('active');
+
+      let winningIndexInArray = 0;
+
+      if (diceRollCount === 8) {
+        winningIndexInArray = 0;
+      } else {
+        winningIndexInArray = Math.floor(Math.random() * boardTiles.length);
+      }
+
+      let winningCard = boardTiles[winningIndexInArray];
+      let winningIndex = 3; 
+
+      const numSectors = boardTiles.length;
+      const anglePerSector = 360 / numSectors;
+      const targetSectorAngle = (winningIndexInArray * anglePerSector) + (anglePerSector / 2);
+      
+      const targetRotation = (360 - targetSectorAngle) % 360;
+      currentWheelRotation += 1440 + (targetRotation - (currentWheelRotation % 360));
+      if (currentWheelRotation < targetRotation + 1440) currentWheelRotation += 360;
+
+      if (fortuneWheel) {
+        fortuneWheel.style.transform = `rotate(${currentWheelRotation}deg)`;
+        
+        isWheelSpinning = true;
+        lastTickedSector = -1;
+        trackWheelPointer();
+      }
+
+      let selectedCards = [
+        getRandomCardItem(),
+        getRandomCardItem(),
+        getRandomCardItem(),
+        winningCard
+      ];
+
+      window.currentWinningCard = winningCard;
+
+      selectedCards.forEach((item, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = `property-card card-pos-${index}`;
+        if (index === winningIndex) cardEl.classList.add('final-selected');
+
+        let innerContent = '';
+        if (item.type === 'start') {
+          innerContent = `
+            <div class="property-card-body glass-glare">
+              <div class="chance-card-content">
+                <div class="chance-title">${item.data.title}</div>
+                <img src="${item.data.img}" class="chance-img" alt="Start">
+                <div class="chance-desc">${item.data.text}</div>
+              </div>
+            </div>
+          `;
+        } else if (item.type === 'chance') {
+          const titleText = item.data.title || 'ШАНС';
+          const symbolHTML = item.data.symbol ? `<div class="chance-symbol">${item.data.symbol}</div>` : '';
+          innerContent = `
+            <div class="property-card-body glass-glare">
+              <div class="chance-card-content">
+                <div class="chance-title">${titleText}</div>
+                ${symbolHTML}
+                <div class="chance-desc">${item.data.text}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          innerContent = renderPropertyCardHTML(item.data);
+        }
+
+        cardEl.innerHTML = innerContent;
+        tornadoInner.appendChild(cardEl);
+      });
+
+      tornadoContainer.classList.add('active');
+      tornadoInner.classList.add('spinning');
+
+      setTimeout(() => {
+        tornadoInner.classList.remove('spinning');
+        tornadoInner.classList.add('stopped');
+        
+        isWheelSpinning = false;
+        if (wheelPointerEl) wheelPointerEl.classList.remove('ticking');
+
+        triggerConfetti();
+
+        if (winningCard.type === 'chance' || winningCard.type === 'start') {
+          buyBtn.style.display = 'none';
+          cancelBtn.style.display = 'none';
+          freeBtn.style.display = 'none';
+          okBtn.style.display = 'flex';
+
+          if (winningCard.data.isJail) {
+            document.getElementById('room-screen').classList.add('jail-alarm');
+          }
+        } else {
+          buyBtn.style.display = 'flex';
+          cancelBtn.style.display = 'flex';
+          okBtn.style.display = 'none';
+          freeBtn.style.display = 'none';
+        }
+
+        if (actionBtns) actionBtns.classList.add('active');
+      }, 1200);
+    }
+
+    function buyCurrentProperty() {
+      const actionBtns = document.getElementById('card-action-btns');
+      if (actionBtns) actionBtns.classList.remove('active');
+
+      const selectedCardEl = document.querySelector('.property-card.final-selected');
+      if (selectedCardEl && window.currentWinningCard) {
+        if (playerBalance >= window.currentWinningCard.data.price) {
+          playerBalance -= window.currentWinningCard.data.price;
+          updateBalanceUI();
+          inventory.push(window.currentWinningCard.data);
+          selectedCardEl.classList.add('fly-to-active');
+
+          setTimeout(() => {
+            closeTornadoOverlay();
+          }, 850);
+        } else {
+          alert('Недостаточно средств!');
+          closeTornadoOverlay();
+        }
+      } else {
+        closeTornadoOverlay();
+      }
+    }
+
+    function handleCardActionResult() {
+      const roomScreen = document.getElementById('room-screen');
+      const isJailCard = window.currentWinningCard && window.currentWinningCard.type === 'chance' && window.currentWinningCard.data.isJail;
+      
+      if (roomScreen.classList.contains('jail-alarm')) {
+        roomScreen.classList.remove('jail-alarm');
+      }
+
+      if (window.currentWinningCard && (window.currentWinningCard.type === 'chance' || window.currentWinningCard.type === 'start')) {
+        const cData = window.currentWinningCard.data;
+        if (cData.isGetOutJail) {
+          hasGetOutOfJailCard = true;
+          inventory.push(cData);
+        }
+
+        if (cData.change && cData.change !== 0) {
+          playerBalance += cData.change;
+          updateBalanceUI();
+        }
+      }
+
+      if (isJailCard && hasGetOutOfJailCard) {
+        showGetOutOfJailCard();
+        return;
+      }
+
+      closeTornadoOverlay();
+    }
+
+    function showGetOutOfJailCard() {
+      const tornadoInner = document.getElementById('tornado-inner');
+      const buyBtn = document.getElementById('btn-buy-property');
+      const cancelBtn = document.getElementById('btn-cancel-property');
+      const okBtn = document.getElementById('btn-ok-property');
+      const freeBtn = document.getElementById('btn-free-jail');
+
+      tornadoInner.innerHTML = '';
+      
+      const cardEl = document.createElement('div');
+      cardEl.className = 'property-card final-selected';
+      cardEl.innerHTML = `
+        <div class="property-card-body glass-glare">
+          <div class="chance-card-content">
+            <div class="chance-title">БЕСПЛАТНЫЙ ВЫХОД</div>
+            <div class="chance-symbol">📜</div>
+            <div class="chance-desc">Использовать карточку освобождения из Тюрьмы</div>
+          </div>
+        </div>
+      `;
+      tornadoInner.appendChild(cardEl);
+
+      buyBtn.style.display = 'none';
+      cancelBtn.style.display = 'none';
+      okBtn.style.display = 'none';
+      freeBtn.style.display = 'flex';
+    }
+
+    function useFreeJailCard() {
+      hasGetOutOfJailCard = false;
+      inventory = inventory.filter(item => !item.isGetOutJail);
+      triggerConfetti();
+      closeTornadoOverlay();
+    }
+
+    function closeTornadoOverlay() {
+      const tornadoContainer = document.getElementById('cards-tornado');
+      const tornadoInner = document.getElementById('tornado-inner');
+      const actionBtns = document.getElementById('card-action-btns');
+      const boardContainer = document.getElementById('board-container');
+      const roomScreen = document.getElementById('room-screen');
+
+      if (roomScreen) roomScreen.classList.remove('jail-alarm');
+      if (boardContainer) boardContainer.classList.remove('zoomed');
+      if (actionBtns) actionBtns.classList.remove('active');
+      if (tornadoContainer) tornadoContainer.classList.remove('active');
+      if (tornadoInner) tornadoInner.classList.remove('stopped');
+    }
+
+    function openActiveModal() {
+      const activeModal = document.getElementById('active-modal');
+      const cardsList = document.getElementById('active-cards-list');
+      cardsList.innerHTML = '';
+
+      if (inventory.length === 0) {
+        cardsList.innerHTML = '<div style="color: #666; margin-top: 40px; font-weight: bold;">У вас пока нет купленных карточек</div>';
+      } else {
+        inventory.forEach(item => {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'inventory-card';
+
+          if (item.title && !item.symbol) {
+            itemEl.innerHTML = renderPropertyCardHTML(item);
+          } else {
+            const t = item.title || 'ШАНС';
+            const s = item.symbol ? `<div style="font-size:24px;">${item.symbol}</div>` : '';
+            itemEl.innerHTML = `
+              <div class="property-card-body" style="font-size: 8px; line-height: 1.2; text-align: center;">
+                <b>${t}</b>
+                ${s}
+                <div>${item.text}</div>
+              </div>
+            `;
+          }
+          cardsList.appendChild(itemEl);
+        });
+      }
+
+      activeModal.classList.add('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initSakuraPetals();
+      renderFortuneWheel();
+
+      const input = document.getElementById('username-input');
+      const authForm = document.getElementById('auth-form');
+
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const user = tg.initDataUnsafe.user;
+        if (input && user.first_name) {
+          input.value = user.first_name;
+        }
+        if (user.photo_url) {
+          const avatar = document.getElementById('header-user-avatar');
+          if (avatar) avatar.src = user.photo_url;
+        }
+      }
+
+      const savedName = localStorage.getItem('monopoly_user_name');
+      if (savedName && input && !input.value) {
+        input.value = savedName;
+      }
+
+      if (authForm) {
+        authForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          enterGame();
+        });
+      }
+
+      document.getElementById('btn-start-id').addEventListener('click', startGame);
+
+      const bankModal = document.getElementById('bank-modal');
+      const activeModal = document.getElementById('active-modal');
+      const creditPlusModal = document.getElementById('credit-plus-modal');
+      const creditMinusModal = document.getElementById('credit-minus-modal');
+
+      document.getElementById('btn-bank-id').addEventListener('click', () => bankModal.classList.add('active'));
+      document.getElementById('btn-bank-back').addEventListener('click', () => bankModal.classList.remove('active'));
+
+      document.getElementById('btn-active-id').addEventListener('click', openActiveModal);
+      document.getElementById('btn-active-back').addEventListener('click', () => activeModal.classList.remove('active'));
+
+      document.getElementById('btn-get-credit').addEventListener('click', () => {
+        bankModal.classList.remove('active');
+        playerBalance += 1000;
+        updateBalanceUI();
+        creditPlusModal.classList.add('active');
+        triggerConfetti();
+      });
+
+      document.getElementById('btn-repay-credit').addEventListener('click', () => {
+        if (playerBalance < 1000) {
+          alert('Недостаточно средств для погашения кредита!');
+          return;
+        }
+        bankModal.classList.remove('active');
+        playerBalance -= 1000;
+        updateBalanceUI();
+        creditMinusModal.classList.add('active');
+        triggerConfetti();
+      });
+
+      document.getElementById('btn-credit-plus-ok').addEventListener('click', () => creditPlusModal.classList.remove('active'));
+      document.getElementById('btn-credit-minus-ok').addEventListener('click', () => creditMinusModal.classList.remove('active'));
+
+      const buyBtn = document.getElementById('btn-buy-property');
+      const cancelBtn = document.getElementById('btn-cancel-property');
+      const okBtn = document.getElementById('btn-ok-property');
+      const freeBtn = document.getElementById('btn-free-jail');
+
+      if (buyBtn) buyBtn.addEventListener('click', buyCurrentProperty);
+      if (cancelBtn) cancelBtn.addEventListener('click', closeTornadoOverlay);
+      if (okBtn) okBtn.addEventListener('click', handleCardActionResult);
+      if (freeBtn) freeBtn.addEventListener('click', useFreeJailCard);
+
+      const diceBtn = document.getElementById('btn-dice-id');
+      const diceImg = document.getElementById('dice-img-id');
+      let isRolling = false;
+
+      if (diceBtn && diceImg) {
+        diceBtn.addEventListener('click', () => {
+          if (isRolling) return; 
+          isRolling = true;
+          
+          diceImg.classList.add('rolling');
+          playCardsTornado();
+
+          setTimeout(() => {
+            diceImg.classList.remove('rolling');
+            isRolling = false;
+          }, 1200);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
