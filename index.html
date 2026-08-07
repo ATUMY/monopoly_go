@@ -772,7 +772,7 @@
         <div class="wheel-pointer"></div>
         
         <!-- Статичная окантовка декора колеса -->
-        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_maps1.png?raw=true" alt="Map Decor" class="wheel-map-decor">
+        <img src="https://raw.githubusercontent.com/ATUMY/monopoly_go1/main/assets/icon_map1.png?raw=true" alt="Map Decor" class="wheel-map-decor">
         
         <!-- Вращающееся колесо -->
         <svg class="fortune-wheel" id="fortune-wheel-svg" viewBox="0 0 500 500"></svg>
@@ -965,8 +965,8 @@
           bulb.className = 'bulb';
           const angle = (i * 360 / bulbCount) * (Math.PI / 180);
           /* Рассчитываем положение лампочки строго по центру красной обводки 12px */
-          const left = 50 + 50.8 * Math.sin(angle);
-          const top = 50 - 50.8 * Math.cos(angle);
+          const left = 50 + 51.8 * Math.sin(angle);
+          const top = 50 - 51.8 * Math.cos(angle);
           bulb.style.left = `${left}%`;
           bulb.style.top = `${top}%`;
           bulb.style.animationDelay = `${(i % 3) * 0.3}s`;
