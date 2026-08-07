@@ -965,8 +965,8 @@
           bulb.className = 'bulb';
           const angle = (i * 360 / bulbCount) * (Math.PI / 180);
           /* Рассчитываем положение лампочки строго по центру красной обводки 12px */
-          const left = 50 + 46.8 * Math.sin(angle);
-          const top = 50 - 46.8 * Math.cos(angle);
+          const left = 50 + 50.8 * Math.sin(angle);
+          const top = 50 - 50.8 * Math.cos(angle);
           bulb.style.left = `${left}%`;
           bulb.style.top = `${top}%`;
           bulb.style.animationDelay = `${(i % 3) * 0.3}s`;
